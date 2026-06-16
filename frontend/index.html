@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google-site-verification" content="PhkFS1hTg9Btm_jkq6DHosH-LBZZV385V4xz0Nwd1mY" />
     <title>LakeBot - Музыкальный бот для Twitch</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/global.css">
@@ -259,7 +260,6 @@
         function updateTexts() {
             var t = translations[currentLang] || translations.ru;
             
-            // Основные элементы
             var textIds = ['heroDesc', 'heroSub', 'feature1Desc', 'feature2Desc', 'feature3Desc', 'footerText'];
             for (var i = 0; i < textIds.length; i++) {
                 var el = document.getElementById(textIds[i]);
@@ -268,7 +268,6 @@
                 }
             }
             
-            // Элементы с HTML (заголовки с иконками)
             var htmlIds = ['heroTitle', 'feature1Title', 'feature2Title', 'feature3Title'];
             for (var j = 0; j < htmlIds.length; j++) {
                 var el = document.getElementById(htmlIds[j]);
@@ -277,7 +276,6 @@
                 }
             }
 
-            // Бургер-меню
             var sidebarIds = ['sidebarHome', 'sidebarMusic', 'sidebarDashboard', 'sidebarModerators', 'sidebarSettings', 'sidebarWidgets'];
             var sidebarKeys = ['sidebarHome', 'sidebarMusic', 'sidebarDashboard', 'sidebarModerators', 'sidebarSettings', 'sidebarWidgets'];
             for (var k = 0; k < sidebarIds.length; k++) {
@@ -287,7 +285,6 @@
                 }
             }
 
-            // Быстрые ссылки (ТУТ БЫЛА ОШИБКА — теперь правильно)
             var quickIds = ['quickLinkMusic', 'quickLinkDashboard', 'quickLinkSettings'];
             var quickKeys = ['quickLinkMusic', 'quickLinkDashboard', 'quickLinkSettings'];
             for (var l = 0; l < quickIds.length; l++) {
@@ -297,7 +294,6 @@
                 }
             }
 
-            // Кнопка авторизации
             var authSection = document.getElementById('authSection');
             if (authSection) {
                 if (currentUser) {
