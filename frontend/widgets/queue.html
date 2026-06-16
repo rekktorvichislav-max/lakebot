@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Queue Widget</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: transparent; font-family: 'Inter', sans-serif; overflow: hidden; }
+        
+        .widget {
+            border-radius: 20px;
+            padding: 16px;
+            min-width: 350px;
+            max-height: 400px;
+            overflow-y: auto;
+            transition: all 0.3s;
+        }
+        .widget::-webkit-scrollbar { width: 6px; }
+        .widget::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 10px; }
+        .widget::-webkit-scrollbar-thumb { background: #9146ff; border-radius: 10px; }
+        .header { font-size: 12px; text-transform: uppercase; letter-spacing: 2px; font-weight: 600; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid; transition: color 0.3s; }
+        .queue-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid rgba(145,70,255,0.08); transition: all 0.2s; }
+        .queue-item:hover { transform: translateX(4px); border-radius: 12px; padding-left: 8px; margin-left: -8px; }
+        .queue-number { font-size: 13px; font-weight: 700; width: 32px; transition: color 0.3s; }
+        .queue-info { flex: 1; }
+        .queue-title { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: color 0.3s; }
+        .queue-user { font-size: 11px; margin-top: 2px; opacity: 0.8; transition: color 0.3s; }
+        .empty { text-align: center; padding: 30px; }
+        .empty .icon { font-size: 40px; margin-bottom: 10px; opacity: 0.6; }
+
+        /* ТЕМЫ */
+        body.purple .widget { background: rgba(13,4,24,0.95); border: 1px solid rgba(145,70,255,0.3); color: #e8d5ff; }
+        body.purple .header { color: #9146ff; border-bottom-color: rgba(145,70,255,0.3); }
+        body.purple .queue-number { color: #9146ff; }
+        body.purple .queue-title { color: #e8d5ff; }
+        body.purple .queue-user { color: #ffd700; }
+
+        body.dark .widget { background: rgba(10,10,10,0.95); border: 1px solid #333; color: #e0e0e0; }
+        body.dark .header { color: #fff; border-bottom-color: #333; }
+        body.dark .queue-number { color: #fff; }
+        body.dark .queue-title { color: #e0e0e0; }
+        body.dark .queue-user { color: #ffd700; }
+
+        body.light .widget { background: rgba(255,255,255,0.95); border: 1px solid rgba(145,70,255,0.3); color: #1a1a2e; }
+        body.light .header { color: #9146ff; border-bottom-color: #9146ff; }
+        body.light .queue-number { color: #9146ff; }
+        body.light .queue-title { color: #1a1a2e; }
+        body.light .queue-user { color: #ff8c00; }
+    </style>
+</head>
+<body class="purple">
+    <div class="widget">
+        <div class="header" id="headerText">📋 ОЧЕРЕДЬ ЗАКАЗОВ</div>
+        <div id="queueList">
+            <div class="empty"><div class="icon">✨</div><div id="emptyText">Очередь пуста</div></div>
+        </div>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        var currentLang = 'ru';
+        var translations = {
+            ru: {
+                queueTitle: '📋 ОЧЕРЕДЬ ЗАКАЗОВ',
+                empty: 'Очередь пуста',
+                orderedBy: '👤'
+            },
+            en: {
+                queueTitle: '📋 ORDER QUEUE',
+                empty: 'Queue is empty',
+                orderedBy: '👤'
+            }
+        };
+
+        function applyTheme(theme) {
+            document.body.className = '';
+            document.body.classList.add(theme);
+            localStorage.setItem('lakebot_theme', theme);
+        }
+
+        function updateLanguage(lang) {
+            currentLang = lang;
+            var t = translations[lang] || translations.ru;
+            document.getElementById('headerText').textContent = t.queueTitle;
+            var emptyDiv = document.getElementById('emptyText');
+            if (emptyDiv) emptyDiv.textContent = t.empty;
+            // Обновляем очередь
+            var items = document.querySelectorAll('.queue-user');
+            items.forEach(function(el) {
+                var userName = el.textContent.replace('👤', '').trim();
+                el.textContent = t.orderedBy + ' ' + userName;
+            });
+        }
+
+        async function loadSettings() {
+            try {
+                var res = await fetch('/api/settings');
+                var settings = await res.json();
+                if (settings.site_theme) applyTheme(settings.site_theme);
+                if (settings.language) {
+                    currentLang = settings.language;
+                    updateLanguage(settings.language);
+                }
+            } catch(e) {}
+        }
+        
+        var socket = io();
+        
+        socket.on('themeUpdate', function(theme) {
+            if (theme) applyTheme(theme);
+        });
+
+        socket.on('languageUpdate', function(lang) {
+            if (lang) updateLanguage(lang);
+        });
+
+        function escapeHtml(text) { var div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
+        function updateQueue(queue) {
+            var container = document.getElementById('queueList');
+            var t = translations[currentLang] || translations.ru;
+            if (!queue || queue.length === 0) {
+                container.innerHTML = '<div class="empty"><div class="icon">✨</div><div id="emptyText">' + t.empty + '</div></div>';
+                return;
+            }
+            container.innerHTML = queue.map(function(item, idx) {
+                return '<div class="queue-item"><div class="queue-number">' + (idx + 1) + '.</div><div class="queue-info"><div class="queue-title">' + escapeHtml(item.title || item.video_id) + '</div><div class="queue-user">' + t.orderedBy + ' ' + escapeHtml(item.userName) + '</div></div></div>';
+            }).join('');
+        }
+        socket.on('queueUpdate', function(data) { updateQueue(data); });
+        loadSettings();
+        fetch('/api/queue').then(function(r) { return r.json(); }).then(function(data) { updateQueue(data.queue); });
+    </script>
+</body>
+</html>

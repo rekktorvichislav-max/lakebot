@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LakeBot - Музыкальный бот для Twitch</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/global.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; transition: background 0.3s, color 0.3s; min-height: 100vh; }
+
+        body.purple { background: linear-gradient(135deg, #0a0a1a 0%, #1a0a2e 30%, #2d1a4e 60%, #0a0a1a 100%); }
+        body.dark { background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%); }
+        body.light { background: linear-gradient(135deg, #f0f0ff 0%, #ffffff 50%, #f5f0ff 100%); }
+
+        .burger-menu {
+            position: fixed; top: 20px; left: 20px; z-index: 1000; cursor: pointer;
+            background: rgba(145,70,255,0.2); backdrop-filter: blur(10px);
+            padding: 12px; border-radius: 16px; border: 1px solid rgba(145,70,255,0.3);
+            transition: all 0.3s;
+        }
+        .burger-menu:hover { transform: scale(1.05); background: rgba(145,70,255,0.4); }
+        .burger-line { width: 30px; height: 3px; margin: 6px 0; border-radius: 3px; transition: all 0.3s; }
+        .burger-menu.active .burger-line:nth-child(1) { transform: rotate(45deg) translate(6px,6px); }
+        .burger-menu.active .burger-line:nth-child(2) { opacity: 0; transform: translateX(-10px); }
+        .burger-menu.active .burger-line:nth-child(3) { transform: rotate(-45deg) translate(6px,-6px); }
+
+        .sidebar {
+            position: fixed; top: 0; left: -300px; width: 280px; height: 100vh;
+            z-index: 999; transition: left 0.4s ease; padding: 80px 0 20px; overflow-y: auto;
+        }
+        .sidebar.open { left: 0; }
+        .sidebar-item {
+            display: flex; align-items: center; gap: 14px; padding: 16px 24px;
+            text-decoration: none; font-weight: 600; transition: all 0.3s;
+            margin: 4px 12px; border-radius: 12px;
+        }
+        .sidebar-item:hover { transform: translateX(8px); }
+        .sidebar-item.active { background: rgba(145,70,255,0.2); }
+        .sidebar-icon { font-size: 20px; width: 28px; }
+
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+            z-index: 998; opacity: 0; visibility: hidden; transition: all 0.3s;
+        }
+        .overlay.active { opacity: 1; visibility: visible; }
+
+        .header { padding: 16px 32px; }
+        .header-content { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        .logo { display: flex; align-items: center; gap: 12px; }
+        .logo-img { width: 40px; height: 40px; border-radius: 12px; object-fit: cover; }
+        .logo-text { font-size: 24px; font-weight: 700; background: linear-gradient(135deg, #9146ff, #b87cff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .auth-btn {
+            background: linear-gradient(135deg, #9146ff, #5a2a9e);
+            border: none; border-radius: 40px; padding: 10px 24px;
+            color: white; font-weight: 600; cursor: pointer; text-decoration: none;
+            transition: all 0.3s;
+        }
+        .auth-btn:hover { transform: scale(1.05); }
+        .user-info { display: flex; align-items: center; gap: 12px; }
+        .user-avatar { width: 36px; height: 36px; border-radius: 50%; background: #9146ff; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 32px; }
+        .hero { text-align: center; padding: 80px 20px; border-radius: 48px; margin-bottom: 48px; background: rgba(0,0,0,0.2); backdrop-filter: blur(10px); border: 1px solid rgba(145,70,255,0.1); }
+        .hero h1 { font-size: 56px; font-weight: 800; margin-bottom: 16px; }
+        body.purple .hero h1 { background: linear-gradient(135deg, #fff, #b87cff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        body.light .hero h1 { background: linear-gradient(135deg, #9146ff, #5a2a9e); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        body.dark .hero h1 { background: linear-gradient(135deg, #fff, #aaa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero p { font-size: 20px; opacity: 0.85; font-weight: 500; max-width: 600px; margin: 0 auto; }
+        .hero .sub { margin-top: 24px; font-size: 16px; opacity: 0.6; }
+
+        .features-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; margin-bottom: 48px; }
+        .feature-card { backdrop-filter: blur(10px); border-radius: 28px; padding: 32px 24px; text-align: center; transition: all 0.3s; border: 1px solid rgba(145,70,255,0.1); }
+        body.purple .feature-card { background: rgba(26,16,46,0.6); }
+        body.dark .feature-card { background: rgba(20,20,20,0.7); }
+        body.light .feature-card { background: rgba(255,255,255,0.85); }
+        .feature-card:hover { transform: translateY(-6px); }
+        .feature-icon { font-size: 48px; margin-bottom: 16px; display: block; }
+        .feature-card h3 { font-size: 20px; margin-bottom: 12px; color: #9146ff; }
+        .feature-card p { font-size: 14px; opacity: 0.7; line-height: 1.6; }
+
+        .quick-links { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-bottom: 48px; }
+        .quick-link { backdrop-filter: blur(10px); border-radius: 16px; padding: 16px 20px; text-align: center; text-decoration: none; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 12px; font-weight: 600; }
+        .quick-link:hover { transform: translateY(-3px); border-color: #9146ff; }
+        body.purple .quick-link { background: rgba(26,16,46,0.5); border: 1px solid rgba(145,70,255,0.2); color: #e8d5ff; }
+        body.purple .quick-link:hover { background: rgba(145,70,255,0.2); border-color: #9146ff; }
+        body.dark .quick-link { background: rgba(20,20,20,0.5); border: 1px solid #333; color: #e0e0e0; }
+        body.dark .quick-link:hover { background: rgba(255,255,255,0.05); border-color: #fff; }
+        body.light .quick-link { background: rgba(255,255,255,0.8); border: 1px solid rgba(145,70,255,0.2); color: #1a1a2e; }
+        body.light .quick-link:hover { background: rgba(145,70,255,0.08); border-color: #9146ff; }
+
+        .footer { text-align: center; padding: 32px; border-top: 1px solid rgba(145,70,255,0.2); margin-top: 48px; font-weight: 500; }
+
+        @media (max-width:768px){
+            .features-grid { grid-template-columns: 1fr; }
+            .quick-links { grid-template-columns: 1fr; }
+            .container { padding: 20px; }
+            .hero h1 { font-size: 36px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="burger-menu" id="burgerMenu">
+        <div class="burger-line"></div>
+        <div class="burger-line"></div>
+        <div class="burger-line"></div>
+    </div>
+    <div class="sidebar" id="sidebar">
+        <a href="/" class="sidebar-item active"><span class="sidebar-icon">🏠</span><span id="sidebarHome">Главная</span></a>
+        <a href="/music" class="sidebar-item"><span class="sidebar-icon">🎵</span><span id="sidebarMusic">Музыка</span></a>
+        <a href="/dashboard" class="sidebar-item"><span class="sidebar-icon">📊</span><span id="sidebarDashboard">Статистика</span></a>
+        <a href="/moderators" class="sidebar-item"><span class="sidebar-icon">👥</span><span id="sidebarModerators">Модераторы</span></a>
+        <a href="/settings" class="sidebar-item"><span class="sidebar-icon">⚙️</span><span id="sidebarSettings">Настройки</span></a>
+        <a href="/widgets" class="sidebar-item"><span class="sidebar-icon">🧩</span><span id="sidebarWidgets">Виджеты для OBS</span></a>
+    </div>
+    <div class="overlay" id="overlay"></div>
+
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <img src="/assets/logo.png" alt="LakeBot" class="logo-img" onerror="this.src='https://placehold.co/40x40/9146ff/white?text=LB'">
+                <span class="logo-text">LakeBot</span>
+            </div>
+            <div id="authSection">
+                <a href="/auth/twitch" class="auth-btn">🔐 Войти через Twitch</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="hero">
+            <h1 id="heroTitle">🎵 LakeBot</h1>
+            <p id="heroDesc">Музыкальный бот для управления стримом с удобным веб-интерфейсом</p>
+            <div class="sub" id="heroSub">Подключайся к Twitch и начни управлять музыкой прямо сейчас</div>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <span class="feature-icon">🎵</span>
+                <h3 id="feature1Title">Заказ музыки</h3>
+                <p id="feature1Desc">Зрители могут заказывать треки через чат с помощью команды !play или !sr</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">📊</span>
+                <h3 id="feature2Title">Статистика</h3>
+                <p id="feature2Desc">Отслеживайте популярные треки, активность зрителей и историю заказов</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">🧩</span>
+                <h3 id="feature3Title">Виджеты для OBS</h3>
+                <p id="feature3Desc">Красивые виджеты для отображения на стриме: плеер, очередь и сейчас играет</p>
+            </div>
+        </div>
+
+        <div class="quick-links">
+            <a href="/music" class="quick-link" id="quickLinkMusic">🎵 Музыка</a>
+            <a href="/dashboard" class="quick-link" id="quickLinkDashboard">📊 Статистика</a>
+            <a href="/settings" class="quick-link" id="quickLinkSettings">⚙️ Настройки</a>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p id="footerText">LakeBot — музыкальный бот для Twitch</p>
+    </footer>
+
+    <script>
+        // ============================================================
+        // БУРГЕР-МЕНЮ
+        // ============================================================
+        (function() {
+            var burgerMenu = document.getElementById('burgerMenu');
+            var sidebar = document.getElementById('sidebar');
+            var overlay = document.getElementById('overlay');
+            if (burgerMenu && sidebar && overlay) {
+                function toggleMenu(e) {
+                    e.stopPropagation();
+                    burgerMenu.classList.toggle('active');
+                    sidebar.classList.toggle('open');
+                    overlay.classList.toggle('active');
+                    document.body.style.overflow = sidebar.classList.contains('open') ? 'hidden' : '';
+                }
+                burgerMenu.addEventListener('click', toggleMenu);
+                overlay.addEventListener('click', toggleMenu);
+                document.querySelectorAll('.sidebar-item').forEach(function(item) {
+                    item.addEventListener('click', function() {
+                        if (sidebar.classList.contains('open')) {
+                            burgerMenu.classList.remove('active');
+                            sidebar.classList.remove('open');
+                            overlay.classList.remove('active');
+                            document.body.style.overflow = '';
+                        }
+                    });
+                });
+            }
+            document.querySelectorAll('.sidebar-item').forEach(function(item) {
+                if (item.getAttribute('href') === window.location.pathname) item.classList.add('active');
+            });
+        })();
+
+        // ============================================================
+        // ПЕРЕВОДЫ
+        // ============================================================
+        var translations = {
+            ru: {
+                heroTitle: '🎵 LakeBot',
+                heroDesc: 'Музыкальный бот для управления стримом с удобным веб-интерфейсом',
+                heroSub: 'Подключайся к Twitch и начни управлять музыкой прямо сейчас',
+                feature1Title: 'Заказ музыки',
+                feature1Desc: 'Зрители могут заказывать треки через чат с помощью команды !play или !sr',
+                feature2Title: 'Статистика',
+                feature2Desc: 'Отслеживайте популярные треки, активность зрителей и историю заказов',
+                feature3Title: 'Виджеты для OBS',
+                feature3Desc: 'Красивые виджеты для отображения на стриме: плеер, очередь и сейчас играет',
+                footer: 'LakeBot — музыкальный бот для Twitch',
+                sidebarHome: 'Главная',
+                sidebarMusic: 'Музыка',
+                sidebarDashboard: 'Статистика',
+                sidebarModerators: 'Модераторы',
+                sidebarSettings: 'Настройки',
+                sidebarWidgets: 'Виджеты для OBS',
+                quickLinkMusic: '🎵 Музыка',
+                quickLinkDashboard: '📊 Статистика',
+                quickLinkSettings: '⚙️ Настройки',
+                authBtn: '🔐 Войти через Twitch'
+            },
+            en: {
+                heroTitle: '🎵 LakeBot',
+                heroDesc: 'Music bot for stream management with a convenient web interface',
+                heroSub: 'Connect to Twitch and start managing music right now',
+                feature1Title: 'Music ordering',
+                feature1Desc: 'Viewers can order tracks via chat using !play or !sr command',
+                feature2Title: 'Statistics',
+                feature2Desc: 'Track popular tracks, viewer activity and order history',
+                feature3Title: 'OBS Widgets',
+                feature3Desc: 'Beautiful widgets for streaming: player, queue and now playing',
+                footer: 'LakeBot — music bot for Twitch',
+                sidebarHome: 'Home',
+                sidebarMusic: 'Music',
+                sidebarDashboard: 'Dashboard',
+                sidebarModerators: 'Moderators',
+                sidebarSettings: 'Settings',
+                sidebarWidgets: 'OBS Widgets',
+                quickLinkMusic: '🎵 Music',
+                quickLinkDashboard: '📊 Dashboard',
+                quickLinkSettings: '⚙️ Settings',
+                authBtn: '🔐 Login with Twitch'
+            }
+        };
+
+        var currentLang = localStorage.getItem('lakebot_language') || 'ru';
+        var currentUser = null;
+
+        // ============================================================
+        // ОБНОВЛЕНИЕ ТЕКСТОВ
+        // ============================================================
+        function updateTexts() {
+            var t = translations[currentLang] || translations.ru;
+            
+            // Основные элементы
+            var textIds = ['heroDesc', 'heroSub', 'feature1Desc', 'feature2Desc', 'feature3Desc', 'footerText'];
+            for (var i = 0; i < textIds.length; i++) {
+                var el = document.getElementById(textIds[i]);
+                if (el) {
+                    el.textContent = t[textIds[i]];
+                }
+            }
+            
+            // Элементы с HTML (заголовки с иконками)
+            var htmlIds = ['heroTitle', 'feature1Title', 'feature2Title', 'feature3Title'];
+            for (var j = 0; j < htmlIds.length; j++) {
+                var el = document.getElementById(htmlIds[j]);
+                if (el) {
+                    el.innerHTML = t[htmlIds[j]];
+                }
+            }
+
+            // Бургер-меню
+            var sidebarIds = ['sidebarHome', 'sidebarMusic', 'sidebarDashboard', 'sidebarModerators', 'sidebarSettings', 'sidebarWidgets'];
+            var sidebarKeys = ['sidebarHome', 'sidebarMusic', 'sidebarDashboard', 'sidebarModerators', 'sidebarSettings', 'sidebarWidgets'];
+            for (var k = 0; k < sidebarIds.length; k++) {
+                var el = document.getElementById(sidebarIds[k]);
+                if (el) {
+                    el.textContent = t[sidebarKeys[k]];
+                }
+            }
+
+            // Быстрые ссылки (ТУТ БЫЛА ОШИБКА — теперь правильно)
+            var quickIds = ['quickLinkMusic', 'quickLinkDashboard', 'quickLinkSettings'];
+            var quickKeys = ['quickLinkMusic', 'quickLinkDashboard', 'quickLinkSettings'];
+            for (var l = 0; l < quickIds.length; l++) {
+                var el = document.getElementById(quickIds[l]);
+                if (el) {
+                    el.textContent = t[quickKeys[l]];
+                }
+            }
+
+            // Кнопка авторизации
+            var authSection = document.getElementById('authSection');
+            if (authSection) {
+                if (currentUser) {
+                    authSection.innerHTML = '<div class="user-info"><span>' + currentUser.username + '</span><div class="user-avatar">' + currentUser.username.charAt(0).toUpperCase() + '</div></div>';
+                } else {
+                    authSection.innerHTML = '<a href="/auth/twitch" class="auth-btn">' + t.authBtn + '</a>';
+                }
+            }
+        }
+
+        // ============================================================
+        // ЯЗЫК
+        // ============================================================
+        function setLang(lang) {
+            currentLang = lang;
+            localStorage.setItem('lakebot_language', lang);
+            updateTexts();
+        }
+
+        // ============================================================
+        // ТЕМА
+        // ============================================================
+        function setTheme(theme) {
+            document.body.className = '';
+            document.body.classList.add(theme);
+            localStorage.setItem('lakebot_theme', theme);
+        }
+
+        // ============================================================
+        // АВТОРИЗАЦИЯ
+        // ============================================================
+        function checkAuth() {
+            fetch('/api/auth/me')
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    if (data.authenticated && data.user) {
+                        currentUser = data.user;
+                        updateTexts();
+                    }
+                })
+                .catch(function() {});
+        }
+
+        // ============================================================
+        // ЗАГРУЗКА НАСТРОЕК
+        // ============================================================
+        function loadSettings() {
+            fetch('/api/settings')
+                .then(function(res) { return res.json(); })
+                .then(function(settings) {
+                    if (settings.site_theme) {
+                        setTheme(settings.site_theme);
+                    }
+                    if (settings.language) {
+                        currentLang = settings.language;
+                        localStorage.setItem('lakebot_language', settings.language);
+                        updateTexts();
+                    }
+                })
+                .catch(function() {});
+        }
+
+        // ============================================================
+        // ИНИЦИАЛИЗАЦИЯ
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', function() {
+            var savedTheme = localStorage.getItem('lakebot_theme') || 'purple';
+            setTheme(savedTheme);
+            
+            loadSettings();
+            checkAuth();
+        });
+
+        // Экспорт
+        window.setLang = setLang;
+        window.setTheme = setTheme;
+        window.translations = translations;
+        window.currentLang = currentLang;
+    </script>
+</body>
+</html>

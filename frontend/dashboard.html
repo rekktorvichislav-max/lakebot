@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LakeBot - Статистика</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/global.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; transition: background 0.3s, color 0.3s; min-height: 100vh; }
+
+        .burger-menu {
+            position: fixed; top: 20px; left: 20px; z-index: 1000; cursor: pointer;
+            background: rgba(145,70,255,0.2); backdrop-filter: blur(10px);
+            padding: 12px; border-radius: 16px; border: 1px solid rgba(145,70,255,0.3);
+            transition: all 0.3s;
+        }
+        .burger-menu:hover { transform: scale(1.05); background: rgba(145,70,255,0.4); }
+        .burger-line { width: 30px; height: 3px; margin: 6px 0; border-radius: 3px; transition: all 0.3s; }
+        .burger-menu.active .burger-line:nth-child(1) { transform: rotate(45deg) translate(6px,6px); }
+        .burger-menu.active .burger-line:nth-child(2) { opacity: 0; transform: translateX(-10px); }
+        .burger-menu.active .burger-line:nth-child(3) { transform: rotate(-45deg) translate(6px,-6px); }
+
+        .sidebar {
+            position: fixed; top: 0; left: -300px; width: 280px; height: 100vh;
+            z-index: 999; transition: left 0.4s ease; padding: 80px 0 20px; overflow-y: auto;
+        }
+        .sidebar.open { left: 0; }
+        .sidebar-item {
+            display: flex; align-items: center; gap: 14px; padding: 16px 24px;
+            text-decoration: none; font-weight: 600; transition: all 0.3s;
+            margin: 4px 12px; border-radius: 12px;
+        }
+        .sidebar-item:hover { transform: translateX(8px); }
+        .sidebar-icon { font-size: 20px; width: 28px; }
+
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+            z-index: 998; opacity: 0; visibility: hidden; transition: all 0.3s;
+        }
+        .overlay.active { opacity: 1; visibility: visible; }
+
+        .header { padding: 16px 32px; }
+        .header-content { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        .logo { display: flex; align-items: center; gap: 12px; }
+        .logo-img { width: 40px; height: 40px; border-radius: 12px; object-fit: cover; }
+        .logo-text { font-size: 24px; font-weight: 700; background: linear-gradient(135deg, #9146ff, #b87cff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .auth-btn {
+            background: linear-gradient(135deg, #9146ff, #5a2a9e);
+            border: none; border-radius: 40px; padding: 10px 24px;
+            color: white; font-weight: 600; cursor: pointer; text-decoration: none;
+            transition: all 0.3s;
+        }
+        .auth-btn:hover { transform: scale(1.05); }
+        .user-info { display: flex; align-items: center; gap: 12px; }
+        .user-avatar { width: 36px; height: 36px; border-radius: 50%; background: #9146ff; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 32px; }
+        .hero { text-align: center; padding: 60px 20px; border-radius: 48px; margin-bottom: 48px; }
+        .hero h1 { font-size: 48px; font-weight: 800; margin-bottom: 16px; }
+        body.purple .hero h1 { background: linear-gradient(135deg, #fff, #b87cff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        body.light .hero h1 { background: linear-gradient(135deg, #9146ff, #5a2a9e); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        body.dark .hero h1 { background: linear-gradient(135deg, #fff, #aaa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero p { font-size: 18px; opacity: 0.85; font-weight: 500; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 24px; margin-bottom: 32px; }
+        .stats-card { backdrop-filter: blur(10px); border-radius: 24px; padding: 28px; text-align: center; transition: all 0.3s; }
+        .stats-card:hover { transform: translateY(-4px); }
+        .stat-value { font-size: 42px; font-weight: 800; margin-bottom: 8px; color: #9146ff; }
+        .stat-label { font-size: 14px; opacity: 0.7; font-weight: 500; }
+
+        .history-card { backdrop-filter: blur(10px); border-radius: 28px; padding: 28px; }
+        .history-card h2 { margin-bottom: 20px; color: #9146ff; font-weight: 700; }
+        .history-list { max-height: 400px; overflow-y: auto; }
+        .history-item { display: flex; justify-content: space-between; align-items: center; padding: 14px; border-bottom: 1px solid rgba(145,70,255,0.1); transition: all 0.2s; }
+        .history-item:hover { background: rgba(145,70,255,0.05); border-radius: 12px; }
+        .history-title { font-weight: 600; }
+        .history-user { color: #ffd700; font-size: 13px; }
+        .history-time { font-size: 12px; opacity: 0.6; }
+        .empty-history { text-align: center; padding: 40px; opacity: 0.6; font-weight: 500; }
+
+        .footer { text-align: center; padding: 32px; border-top: 1px solid rgba(145,70,255,0.2); margin-top: 48px; font-weight: 500; }
+
+        @media (max-width:768px){ .stats-grid { grid-template-columns: repeat(2,1fr); } .history-item { flex-direction: column; align-items: flex-start; gap: 8px; } .container { padding: 20px; } }
+    </style>
+</head>
+<body>
+    <div class="burger-menu" id="burgerMenu">
+        <div class="burger-line"></div>
+        <div class="burger-line"></div>
+        <div class="burger-line"></div>
+    </div>
+    <div class="sidebar" id="sidebar">
+        <a href="/" class="sidebar-item"><span class="sidebar-icon">🏠</span><span>Главная</span></a>
+        <a href="/music" class="sidebar-item"><span class="sidebar-icon">🎵</span><span>Музыка</span></a>
+        <a href="/dashboard" class="sidebar-item active"><span class="sidebar-icon">📊</span><span>Статистика</span></a>
+        <a href="/moderators" class="sidebar-item"><span class="sidebar-icon">👥</span><span>Модераторы</span></a>
+        <a href="/settings" class="sidebar-item"><span class="sidebar-icon">⚙️</span><span>Настройки</span></a>
+        <a href="/widgets" class="sidebar-item"><span class="sidebar-icon">🧩</span><span>Виджеты для OBS</span></a>
+    </div>
+    <div class="overlay" id="overlay"></div>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <img src="/assets/logo.png" alt="LakeBot" class="logo-img" onerror="this.src='https://placehold.co/40x40/9146ff/white?text=LB'">
+                <span class="logo-text">LakeBot</span>
+            </div>
+            <div id="authSection">
+                <a href="/auth/twitch" class="auth-btn">🔐 Войти через Twitch</a>
+            </div>
+        </div>
+    </header>
+    <main class="container">
+        <div class="hero">
+            <h1 id="heroTitle">Статистика LakeBot</h1>
+            <p id="heroDesc">Аналитика работы вашего музыкального бота</p>
+        </div>
+        <div class="stats-grid">
+            <div class="stats-card"><div class="stat-value" id="totalSongs">0</div><div class="stat-label" id="totalSongsLabel">Всего треков</div></div>
+            <div class="stats-card"><div class="stat-value" id="totalUsers">0</div><div class="stat-label" id="totalUsersLabel">Пользователей</div></div>
+            <div class="stats-card"><div class="stat-value" id="queueLength">0</div><div class="stat-label" id="queueLabel">В очереди</div></div>
+            <div class="stats-card"><div class="stat-value" id="votesCount">0</div><div class="stat-label" id="votesLabel">Голосов</div></div>
+        </div>
+        <div class="history-card">
+            <h2 id="historyTitle">📜 Последние заказы</h2>
+            <div class="history-list" id="historyList"><div class="empty-history" id="emptyHistory">📭 История пуста</div></div>
+        </div>
+    </main>
+    <footer class="footer">
+        <p id="footerText">LakeBot — музыкальный бот для Twitch | Статистика</p>
+    </footer>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/theme.js"></script>
+    <script>
+        document.querySelectorAll('.sidebar-item').forEach(item => {
+            if (item.getAttribute('href') === window.location.pathname) item.classList.add('active');
+        });
+
+        let currentLanguage = 'ru', currentUser = null;
+        const translations = {
+            ru: { home: 'Главная', music: 'Музыка', dashboard: 'Статистика', moderators: 'Модераторы', settings: 'Настройки', widgets: 'Виджеты для OBS', heroTitle: 'Статистика LakeBot', heroDesc: 'Аналитика работы вашего музыкального бота', totalSongs: 'Всего треков', totalUsers: 'Пользователей', queue: 'В очереди', votes: 'Голосов', historyTitle: '📜 Последние заказы', emptyHistory: '📭 История пуста', footer: 'LakeBot — музыкальный бот для Twitch | Статистика', authBtn: '🔐 Войти через Twitch' },
+            en: { home: 'Home', music: 'Music', dashboard: 'Dashboard', moderators: 'Moderators', settings: 'Settings', widgets: 'OBS Widgets', heroTitle: 'LakeBot Statistics', heroDesc: 'Analytics of your music bot', totalSongs: 'Total tracks', totalUsers: 'Users', queue: 'In queue', votes: 'Votes', historyTitle: '📜 Recent orders', emptyHistory: '📭 History is empty', footer: 'LakeBot — music bot for Twitch | Statistics', authBtn: '🔐 Login with Twitch' }
+        };
+
+        function updateAllText() {
+            const t = translations[currentLanguage] || translations.ru;
+            const texts = ['home','music','dashboard','moderators','settings','widgets'];
+            document.querySelectorAll('.sidebar-item').forEach((item,i)=>{ if(i<texts.length){ const span = item.querySelector('span:last-child'); if(span) span.textContent = t[texts[i]]; } });
+            document.getElementById('heroTitle').textContent = t.heroTitle;
+            document.getElementById('heroDesc').textContent = t.heroDesc;
+            document.getElementById('totalSongsLabel').textContent = t.totalSongs;
+            document.getElementById('totalUsersLabel').textContent = t.totalUsers;
+            document.getElementById('queueLabel').textContent = t.queue;
+            document.getElementById('votesLabel').textContent = t.votes;
+            document.getElementById('historyTitle').innerHTML = t.historyTitle;
+            document.getElementById('footerText').textContent = t.footer;
+            const authSection = document.getElementById('authSection');
+            if (authSection) {
+                if (currentUser) {
+                    authSection.innerHTML = `<div class="user-info"><span>${currentUser.username}</span><div class="user-avatar">${currentUser.username.charAt(0).toUpperCase()}</div></div>`;
+                } else {
+                    authSection.innerHTML = `<a href="/auth/twitch" class="auth-btn">${t.authBtn}</a>`;
+                }
+            }
+        }
+
+        async function loadLanguage() { try { const res = await fetch('/api/settings'); const settings = await res.json(); if (settings.language) { currentLanguage = settings.language; updateAllText(); } } catch(e) {} }
+        async function checkAuth() { try { const res = await fetch('/api/auth/me'); const data = await res.json(); if (data.authenticated && data.user) { currentUser = data.user; updateAllText(); } } catch(e) {} }
+        async function loadStats() { try { const res = await fetch('/api/stats'); const stats = await res.json(); document.getElementById('totalSongs').textContent = stats.total_songs || 0; document.getElementById('totalUsers').textContent = stats.total_users || 0; document.getElementById('queueLength').textContent = stats.queue_length || 0; document.getElementById('votesCount').textContent = stats.votes || 0; } catch(e) {} }
+        async function loadHistory() { try { const res = await fetch('/api/history?limit=20'); const history = await res.json(); const container = document.getElementById('historyList'); if (!history || history.length === 0) { container.innerHTML = `<div class="empty-history">${translations[currentLanguage]?.emptyHistory || '📭 История пуста'}</div>`; return; } container.innerHTML = history.map(item => `<div class="history-item"><div class="history-title">${escapeHtml(item.title || item.video_id)}</div><div class="history-user">👤 ${escapeHtml(item.user)}</div><div class="history-time">${new Date(item.created_at).toLocaleString()}</div></div>`).join(''); }
+        function escapeHtml(text) { const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
+        loadLanguage(); checkAuth(); loadStats(); loadHistory();
+        const socket = io(); socket.on('statsUpdate', (data) => { document.getElementById('queueLength').textContent = data.queue_length; document.getElementById('votesCount').textContent = data.votes; }); socket.on('queueUpdate', () => loadStats()); socket.on('currentUpdate', () => loadStats());
+    </script>
+</body>
+</html>

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Now Playing Widget</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: transparent; font-family: 'Inter', sans-serif; overflow: hidden; transition: all 0.3s; }
+        
+        .widget {
+            border-radius: 20px;
+            padding: 16px 20px;
+            min-width: 350px;
+            animation: slideIn 0.5s ease-out;
+            transition: all 0.3s;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .content { display: flex; align-items: center; gap: 16px; }
+        .thumbnail { width: 80px; height: 80px; border-radius: 16px; overflow: hidden; flex-shrink: 0; background: rgba(0,0,0,0.2); }
+        .thumbnail img { width: 100%; height: 100%; object-fit: cover; }
+        .info { flex: 1; }
+        .label { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; font-weight: 600; margin-bottom: 6px; transition: color 0.3s; }
+        .title { font-size: 15px; font-weight: 700; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: color 0.3s; }
+        .user { font-size: 12px; margin-bottom: 4px; transition: color 0.3s; }
+        .votes { font-size: 11px; margin-top: 6px; transition: color 0.3s; }
+        .empty { text-align: center; padding: 20px; }
+        .empty .icon { font-size: 48px; margin-bottom: 12px; opacity: 0.7; }
+
+        /* ТЕМЫ */
+        body.purple .widget { background: linear-gradient(135deg, #1a0a2e, #0d0418); border-left: 4px solid #9146ff; box-shadow: 0 4px 20px rgba(0,0,0,0.3); color: #e8d5ff; }
+        body.purple .label { color: #9146ff; }
+        body.purple .title { color: #e8d5ff; }
+        body.purple .user { color: #ffd700; }
+        body.purple .votes { color: #b8a0e0; }
+
+        body.dark .widget { background: linear-gradient(135deg, #1a1a1a, #0a0a0a); border-left: 4px solid #fff; color: #e0e0e0; }
+        body.dark .label { color: #fff; }
+        body.dark .title { color: #e0e0e0; }
+        body.dark .user { color: #ffd700; }
+        body.dark .votes { color: #aaa; }
+
+        body.light .widget { background: linear-gradient(135deg, #fff, #f0f0ff); border-left: 4px solid #9146ff; color: #1a1a2e; }
+        body.light .label { color: #9146ff; }
+        body.light .title { color: #1a1a2e; }
+        body.light .user { color: #ff8c00; }
+        body.light .votes { color: #666; }
+    </style>
+</head>
+<body class="purple">
+    <div class="widget" id="widget">
+        <div class="empty" id="emptyState">
+            <div class="icon">🎵</div>
+            <div id="emptyText">Ожидание трека...</div>
+        </div>
+        <div class="content" id="nowPlaying" style="display: none;">
+            <div class="thumbnail"><img id="thumbnail" src=""></div>
+            <div class="info">
+                <div class="label" id="labelText">СЕЙЧАС ИГРАЕТ</div>
+                <div class="title" id="title">-</div>
+                <div class="user" id="user">👤 Заказал: -</div>
+                <div class="votes" id="votes">🎫 Голосов: 0/2</div>
+            </div>
+        </div>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        var currentLang = 'ru';
+        var translations = {
+            ru: {
+                nowPlaying: 'СЕЙЧАС ИГРАЕТ',
+                orderedBy: '👤 Заказал:',
+                votes: '🎫 Голосов:',
+                waiting: 'Ожидание трека...'
+            },
+            en: {
+                nowPlaying: 'NOW PLAYING',
+                orderedBy: '👤 Ordered by:',
+                votes: '🎫 Votes:',
+                waiting: 'Waiting for track...'
+            }
+        };
+
+        function applyTheme(theme) {
+            document.body.className = '';
+            document.body.classList.add(theme);
+            localStorage.setItem('lakebot_theme', theme);
+        }
+
+        function updateLanguage(lang) {
+            currentLang = lang;
+            var t = translations[lang] || translations.ru;
+            document.getElementById('labelText').textContent = t.nowPlaying;
+            document.getElementById('emptyText').textContent = t.waiting;
+            // Обновляем текущий трек если есть
+            var userEl = document.getElementById('user');
+            if (userEl && userEl.textContent.includes('Заказал:')) {
+                var userName = userEl.textContent.replace('👤 Заказал:', '').trim();
+                userEl.textContent = t.orderedBy + ' ' + userName;
+            }
+            var votesEl = document.getElementById('votes');
+            if (votesEl) {
+                var match = votesEl.textContent.match(/\d+/g);
+                if (match) {
+                    votesEl.textContent = t.votes + ' ' + match[0] + '/' + match[1];
+                }
+            }
+        }
+
+        async function loadSettings() {
+            try {
+                var res = await fetch('/api/settings');
+                var settings = await res.json();
+                if (settings.site_theme) applyTheme(settings.site_theme);
+                if (settings.language) {
+                    currentLang = settings.language;
+                    updateLanguage(settings.language);
+                }
+            } catch(e) {}
+        }
+        
+        var socket = io();
+        
+        socket.on('themeUpdate', function(theme) {
+            if (theme) applyTheme(theme);
+        });
+
+        socket.on('languageUpdate', function(lang) {
+            if (lang) updateLanguage(lang);
+        });
+
+        socket.on('currentUpdate', function(data) {
+            var t = translations[currentLang] || translations.ru;
+            if (data) {
+                document.getElementById('emptyState').style.display = 'none';
+                document.getElementById('nowPlaying').style.display = 'flex';
+                document.getElementById('title').textContent = data.title || data.video_id;
+                document.getElementById('user').textContent = t.orderedBy + ' ' + (data.userName || 'Guest');
+                document.getElementById('thumbnail').src = data.thumbnail || 'https://i.ytimg.com/vi/' + data.video_id + '/mqdefault.jpg';
+            } else {
+                document.getElementById('emptyState').style.display = 'block';
+                document.getElementById('nowPlaying').style.display = 'none';
+            }
+        });
+        socket.on('voteUpdate', function(data) {
+            var t = translations[currentLang] || translations.ru;
+            document.getElementById('votes').textContent = t.votes + ' ' + data.votes + '/' + data.threshold;
+        });
+
+        loadSettings();
+        fetch('/api/current').then(function(res) { return res.json(); }).then(function(data) {
+            if (data) {
+                var t = translations[currentLang] || translations.ru;
+                document.getElementById('emptyState').style.display = 'none';
+                document.getElementById('nowPlaying').style.display = 'flex';
+                document.getElementById('title').textContent = data.title || data.video_id;
+                document.getElementById('user').textContent = t.orderedBy + ' ' + (data.userName || 'Guest');
+                document.getElementById('thumbnail').src = data.thumbnail || 'https://i.ytimg.com/vi/' + data.video_id + '/mqdefault.jpg';
+            }
+        }).catch(function() {});
+    </script>
+</body>
+</html>

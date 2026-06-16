@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LakeBot - OBS Player</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background-color: transparent; font-family: 'Inter', sans-serif; overflow: hidden; }
+        
+        .player-container { width: 100vw; height: 100vh; position: relative; border-radius: 25px; overflow: hidden; background: #000; }
+        .video-wrapper { width: 100%; height: 100%; background: #000; }
+        .video-wrapper iframe { width: 100%; height: 100%; border: none; pointer-events: none; }
+        
+        .placeholder {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            text-align: center;
+            z-index: 10;
+            transition: all 0.3s;
+        }
+        .placeholder .icon { font-size: 64px; }
+        .placeholder .text { font-size: 18px; font-weight: 500; }
+        .placeholder .sub { font-size: 14px; opacity: 0.6; }
+        
+        .info-overlay {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            border-left: 4px solid #9146ff;
+            z-index: 20;
+            animation: fadeInUp 0.3s ease;
+            transition: all 0.3s;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .info-thumb { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
+        .info-content { flex: 1; min-width: 0; overflow: hidden; }
+        .info-label { font-size: 10px; text-transform: uppercase; letter-spacing: 2px; font-weight: 600; margin-bottom: 4px; transition: color 0.3s; }
+        
+        .marquee-wrapper { width: 100%; overflow: hidden; white-space: nowrap; }
+        .info-title { display: inline-block; font-size: 14px; font-weight: 600; padding-right: 30px; transition: color 0.3s; }
+        .info-title.no-animation { animation: none; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .info-user { font-size: 11px; margin-top: 4px; transition: color 0.3s; }
+        .info-votes { font-size: 10px; opacity: 0.8; margin-top: 4px; transition: color 0.3s; }
+        .hidden { display: none; }
+
+        /* ТЕМЫ */
+        body.purple .placeholder { background: linear-gradient(135deg, #1a0a2e, #0d0418); color: #9146ff; }
+        body.purple .info-overlay { background: rgba(0,0,0,0.85); color: #e8d5ff; }
+        body.purple .info-label { color: #9146ff; }
+        body.purple .info-title { color: #ffffff; }
+        body.purple .info-user { color: #ffd700; }
+        body.purple .info-votes { color: #b8a0e0; }
+
+        body.dark .placeholder { background: linear-gradient(135deg, #1a1a1a, #0a0a0a); color: #fff; }
+        body.dark .info-overlay { background: rgba(0,0,0,0.9); color: #e0e0e0; }
+        body.dark .info-label { color: #fff; }
+        body.dark .info-title { color: #ffffff; }
+        body.dark .info-user { color: #ffd700; }
+        body.dark .info-votes { color: #aaa; }
+
+        body.light .placeholder { background: linear-gradient(135deg, #ffffff, #f0f0ff); color: #9146ff; }
+        body.light .info-overlay { background: rgba(255,255,255,0.9); color: #1a1a2e; }
+        body.light .info-label { color: #9146ff; }
+        body.light .info-title { color: #1a1a2e; }
+        body.light .info-user { color: #ff8c00; }
+        body.light .info-votes { color: #666; }
+    </style>
+</head>
+<body class="purple">
+    <div class="player-container">
+        <div class="video-wrapper"><iframe id="videoPlayer" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>
+        <div id="placeholder" class="placeholder"><div class="icon">🎵</div><div class="text">LAKEBOT</div><div class="sub" id="waitingText">Waiting for track...</div></div>
+        <div id="infoOverlay" class="info-overlay hidden">
+            <img class="info-thumb" id="infoThumb" src="">
+            <div class="info-content">
+                <div class="info-label" id="nowPlayingLabel">NOW PLAYING</div>
+                <div class="marquee-wrapper"><div class="info-title" id="infoTitle">-</div></div>
+                <div class="info-user" id="infoUser">👤 Ordered by: -</div>
+                <div class="info-votes" id="infoVotes">🎫 Votes: 0/2</div>
+            </div>
+        </div>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        var currentLang = 'ru';
+        var translations = {
+            ru: {
+                nowPlaying: 'СЕЙЧАС ИГРАЕТ',
+                orderedBy: '👤 Заказал:',
+                votes: '🎫 Голосов:',
+                waiting: 'Ожидание трека...'
+            },
+            en: {
+                nowPlaying: 'NOW PLAYING',
+                orderedBy: '👤 Ordered by:',
+                votes: '🎫 Votes:',
+                waiting: 'Waiting for track...'
+            }
+        };
+
+        var currentVideoId = null, marqueeEnabled = true, marqueeSpeed = 15, currentTitleText = '';
+        var currentTheme = 'purple';
+        var videoPlayer = document.getElementById('videoPlayer'), placeholder = document.getElementById('placeholder'), infoOverlay = document.getElementById('infoOverlay'), infoTitle = document.getElementById('infoTitle'), infoUser = document.getElementById('infoUser'), infoThumb = document.getElementById('infoThumb'), infoVotes = document.getElementById('infoVotes'), socket = io();
+        
+        function applyTheme(theme) {
+            currentTheme = theme;
+            document.body.className = '';
+            document.body.classList.add(theme);
+            localStorage.setItem('lakebot_theme', theme);
+        }
+
+        function updateLanguage(lang) {
+            currentLang = lang;
+            var t = translations[lang] || translations.ru;
+            document.getElementById('nowPlayingLabel').textContent = t.nowPlaying;
+            document.getElementById('waitingText').textContent = t.waiting;
+            // Обновляем текущий трек если есть
+            var userEl = document.getElementById('infoUser');
+            if (userEl && userEl.textContent.includes('👤')) {
+                var userName = userEl.textContent.replace('👤 Заказал:', '').replace('👤 Ordered by:', '').trim();
+                userEl.textContent = t.orderedBy + ' ' + userName;
+            }
+            var votesEl = document.getElementById('infoVotes');
+            if (votesEl) {
+                var match = votesEl.textContent.match(/\d+/g);
+                if (match) {
+                    votesEl.textContent = t.votes + ' ' + match[0] + '/' + match[1];
+                }
+            }
+        }
+
+        async function loadSettings() {
+            try {
+                var res = await fetch('/api/settings');
+                var settings = await res.json();
+                if (settings.site_theme) applyTheme(settings.site_theme);
+                if (settings.language) {
+                    currentLang = settings.language;
+                    updateLanguage(settings.language);
+                }
+                marqueeEnabled = settings.marquee_enabled === 'true';
+                marqueeSpeed = parseInt(settings.marquee_speed) || 15;
+                if (currentTitleText) setMarqueeAnimation(currentTitleText);
+            } catch(e) {}
+        }
+        
+        function setMarqueeAnimation(text) {
+            currentTitleText = text; infoTitle.textContent = text;
+            infoTitle.classList.remove('no-animation');
+            if (!marqueeEnabled) { infoTitle.style.animation = 'none'; infoTitle.classList.add('no-animation'); return; }
+            infoTitle.classList.remove('no-animation');
+            var container = infoTitle.parentElement, containerWidth = container.clientWidth, textWidth = infoTitle.scrollWidth;
+            if (textWidth > containerWidth) { infoTitle.style.animation = 'marquee ' + marqueeSpeed + 's linear infinite'; }
+            else { infoTitle.style.animation = 'none'; infoTitle.classList.add('no-animation'); }
+        }
+        
+        function loadVideo(videoId) { if (!videoId) return; var origin = window.location.origin; var videoUrl = 'https://www.youtube.com/embed/' + videoId + '?autoplay=1&enablejsapi=1&origin=' + origin; videoPlayer.src = videoUrl; videoPlayer.style.display = 'block'; }
+        
+        function updateNowPlaying(current, votes, threshold) {
+            votes = votes || 0; threshold = threshold || 2;
+            var t = translations[currentLang] || translations.ru;
+            if (current && current.video_id) {
+                var displayTitle = current.title || current.video_id;
+                displayTitle = displayTitle.replace(/^Track\s+/, '');
+                setMarqueeAnimation(displayTitle);
+                infoUser.textContent = t.orderedBy + ' ' + (current.userName || 'Guest');
+                infoThumb.src = current.thumbnail || 'https://i.ytimg.com/vi/' + current.video_id + '/mqdefault.jpg';
+                infoVotes.textContent = t.votes + ' ' + votes + '/' + threshold;
+                infoOverlay.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+                if (current.video_id !== currentVideoId) {
+                    currentVideoId = current.video_id;
+                    loadVideo(current.video_id);
+                }
+            } else {
+                currentVideoId = null;
+                placeholder.classList.remove('hidden');
+                videoPlayer.style.display = 'none';
+                videoPlayer.src = '';
+                infoOverlay.classList.add('hidden');
+            }
+        }
+        
+        socket.on('themeUpdate', function(theme) {
+            if (theme) applyTheme(theme);
+        });
+
+        socket.on('languageUpdate', function(lang) {
+            if (lang) updateLanguage(lang);
+        });
+
+        window.addEventListener('resize', function() { if (currentVideoId && currentTitleText) setMarqueeAnimation(currentTitleText); });
+        socket.on('currentUpdate', function(data) { fetch('/api/stats').then(function(res) { return res.json(); }).then(function(stats) { updateNowPlaying(data, stats.votes, stats.threshold); }).catch(function() { updateNowPlaying(data, 0, 2); }); });
+        socket.on('voteUpdate', function(data) { if (currentVideoId) { var t = translations[currentLang] || translations.ru; infoVotes.textContent = t.votes + ' ' + data.votes + '/' + data.threshold; } });
+        
+        loadSettings();
+        fetch('/api/current').then(function(res) { return res.json(); }).then(function(data) { if (data && data.video_id) { fetch('/api/stats').then(function(res) { return res.json(); }).then(function(stats) { updateNowPlaying(data, stats.votes, stats.threshold); }).catch(function() { updateNowPlaying(data, 0, 2); }); } }).catch(function(err) { console.error('Error:', err); });
+        
+        var style = document.createElement('style');
+        style.textContent = '@keyframes marquee { 0% { transform: translateX(0%); } 100% { transform: translateX(-100%); } }';
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

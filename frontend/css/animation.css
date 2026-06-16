@@ -1,0 +1,196 @@
+/* Анимации для LakeBot */
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 0.7;
+    }
+    50% {
+        transform: scale(1.05);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 0.7;
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+/* Классы анимаций */
+.fade-in {
+    animation: fadeIn 0.5s ease-out;
+}
+
+.slide-in-left {
+    animation: slideInLeft 0.4s ease-out;
+}
+
+.slide-in-right {
+    animation: slideInRight 0.4s ease-out;
+}
+
+.pulse {
+    animation: pulse 1.5s infinite;
+}
+
+.shimmer {
+    background: linear-gradient(90deg, #1a1a3a, #2a2a4a, #1a1a3a);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+}
+
+/* Hover эффекты */
+.hover-glow {
+    transition: all 0.3s ease;
+}
+
+.hover-glow:hover {
+    box-shadow: 0 0 15px rgba(145, 70, 255, 0.5);
+    transform: translateY(-2px);
+}
+
+.hover-scale {
+    transition: transform 0.2s ease;
+}
+
+.hover-scale:hover {
+    transform: scale(1.02);
+}
+
+/* Загрузочный спиннер */
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(145, 70, 255, 0.3);
+    border-top-color: #9146ff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+/* Анимация для кнопок */
+.btn-click {
+    transition: transform 0.1s ease;
+}
+
+.btn-click:active {
+    transform: scale(0.96);
+}
+
+/* Анимация появления очереди */
+.queue-item {
+    animation: slideInLeft 0.3s ease-out;
+    animation-fill-mode: backwards;
+}
+
+.queue-item:nth-child(1) { animation-delay: 0.05s; }
+.queue-item:nth-child(2) { animation-delay: 0.1s; }
+.queue-item:nth-child(3) { animation-delay: 0.15s; }
+.queue-item:nth-child(4) { animation-delay: 0.2s; }
+.queue-item:nth-child(5) { animation-delay: 0.25s; }
+.queue-item:nth-child(n+6) { animation-delay: 0.3s; }
+
+/* Мигающий текст */
+.blink {
+    animation: pulse 1s infinite;
+}
+
+/* Новое уведомление */
+.notification-badge {
+    position: relative;
+}
+
+.notification-badge::after {
+    content: '';
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 10px;
+    height: 10px;
+    background: #e94560;
+    border-radius: 50%;
+    animation: pulse 1s infinite;
+}
+
+/* Градиентный текст */
+.gradient-text {
+    background: linear-gradient(135deg, #9146ff, #b87cff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Анимация появления модального окна */
+.modal.show {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Progress bar анимация */
+.progress-bar-animated {
+    transition: width 0.3s ease;
+}
+
+/* Карточки при загрузке */
+.skeleton {
+    background: linear-gradient(90deg, #1a1a3a 25%, #2a2a4a 50%, #1a1a3a 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 8px;
+}

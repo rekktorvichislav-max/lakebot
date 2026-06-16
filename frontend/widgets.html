@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LakeBot - Виджеты для OBS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/global.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; transition: background 0.3s, color 0.3s; min-height: 100vh; }
+
+        .burger-menu {
+            position: fixed; top: 20px; left: 20px; z-index: 1000; cursor: pointer;
+            background: rgba(145,70,255,0.2); backdrop-filter: blur(10px);
+            padding: 12px; border-radius: 16px; border: 1px solid rgba(145,70,255,0.3);
+            transition: all 0.3s;
+        }
+        .burger-menu:hover { transform: scale(1.05); background: rgba(145,70,255,0.4); }
+        .burger-line { width: 30px; height: 3px; margin: 6px 0; border-radius: 3px; transition: all 0.3s; }
+        .burger-menu.active .burger-line:nth-child(1) { transform: rotate(45deg) translate(6px,6px); }
+        .burger-menu.active .burger-line:nth-child(2) { opacity: 0; transform: translateX(-10px); }
+        .burger-menu.active .burger-line:nth-child(3) { transform: rotate(-45deg) translate(6px,-6px); }
+
+        .sidebar {
+            position: fixed; top: 0; left: -300px; width: 280px; height: 100vh;
+            z-index: 999; transition: left 0.4s ease; padding: 80px 0 20px; overflow-y: auto;
+        }
+        .sidebar.open { left: 0; }
+        .sidebar-item {
+            display: flex; align-items: center; gap: 14px; padding: 16px 24px;
+            text-decoration: none; font-weight: 600; transition: all 0.3s;
+            margin: 4px 12px; border-radius: 12px;
+        }
+        .sidebar-item:hover { transform: translateX(8px); }
+        .sidebar-icon { font-size: 20px; width: 28px; }
+
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+            z-index: 998; opacity: 0; visibility: hidden; transition: all 0.3s;
+        }
+        .overlay.active { opacity: 1; visibility: visible; }
+
+        .header { padding: 16px 32px; }
+        .header-content { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        .logo { display: flex; align-items: center; gap: 12px; }
+        .logo-img { width: 40px; height: 40px; border-radius: 12px; object-fit: cover; }
+        .logo-text { font-size: 24px; font-weight: 700; background: linear-gradient(135deg, #9146ff, #b87cff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .auth-btn {
+            background: linear-gradient(135deg, #9146ff, #5a2a9e);
+            border: none; border-radius: 40px; padding: 10px 24px;
+            color: white; font-weight: 600; cursor: pointer; text-decoration: none;
+            transition: all 0.3s;
+        }
+        .auth-btn:hover { transform: scale(1.05); }
+        .user-info { display: flex; align-items: center; gap: 12px; }
+        .user-avatar { width: 36px; height: 36px; border-radius: 50%; background: #9146ff; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 32px; }
+        .hero { text-align: center; padding: 60px 20px; border-radius: 48px; margin-bottom: 48px; }
+        .hero h1 { font-size: 48px; font-weight: 800; margin-bottom: 16px; }
+        body.purple .hero h1 { background: linear-gradient(135deg, #fff, #b87cff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        body.light .hero h1 { background: linear-gradient(135deg, #9146ff, #5a2a9e); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        body.dark .hero h1 { background: linear-gradient(135deg, #fff, #aaa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero p { font-size: 18px; opacity: 0.8; font-weight: 500; }
+
+        .widgets-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px,1fr)); gap: 28px; }
+        .widget-card { backdrop-filter: blur(10px); border-radius: 28px; padding: 24px; transition: all 0.3s; }
+        .widget-card:hover { transform: translateY(-4px); border-color: #9146ff; box-shadow: 0 10px 30px rgba(145,70,255,0.2); }
+
+        .widget-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid rgba(145,70,255,0.2); }
+        .widget-header h3 { font-size: 20px; color: #9146ff; font-weight: 700; }
+        .widget-id { font-size: 11px; background: rgba(145,70,255,0.2); padding: 4px 10px; border-radius: 20px; color: #b87cff; font-family: monospace; }
+
+        .widget-preview { background: rgba(0,0,0,0.3); border-radius: 20px; padding: 20px; margin-bottom: 20px; min-height: 180px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(145,70,255,0.1); }
+        .widget-preview iframe { border: none; border-radius: 16px; width: 100%; height: 160px; background: transparent; }
+
+        .widget-url { display: flex; gap: 12px; margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(145,70,255,0.1); }
+        .widget-url input { flex: 1; background: rgba(0,0,0,0.5); border: 1px solid rgba(145,70,255,0.3); border-radius: 14px; padding: 12px 16px; color: #88ffaa; font-family: monospace; font-size: 13px; }
+        body.light .widget-url input { background: #f5f5f5; color: #1a1a2e; }
+        .copy-btn { background: linear-gradient(135deg, #9146ff, #5a2a9e); border: none; border-radius: 14px; padding: 12px 20px; color: white; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .copy-btn:hover { transform: scale(1.02); filter: brightness(1.05); }
+
+        .widget-hint { font-size: 12px; opacity: 0.6; margin-top: 12px; display: flex; align-items: center; gap: 8px; font-weight: 500; }
+        .widget-hint .size { background: rgba(145,70,255,0.2); padding: 4px 8px; border-radius: 8px; }
+
+        .footer { text-align: center; padding: 32px; border-top: 1px solid rgba(145,70,255,0.2); margin-top: 48px; font-weight: 500; }
+
+        @media (max-width:768px){ .widgets-grid { grid-template-columns: 1fr; } .container { padding: 20px; } }
+    </style>
+</head>
+<body>
+    <div class="burger-menu" id="burgerMenu">
+        <div class="burger-line"></div>
+        <div class="burger-line"></div>
+        <div class="burger-line"></div>
+    </div>
+    <div class="sidebar" id="sidebar">
+        <a href="/" class="sidebar-item"><span class="sidebar-icon">🏠</span><span>Главная</span></a>
+        <a href="/music" class="sidebar-item"><span class="sidebar-icon">🎵</span><span>Музыка</span></a>
+        <a href="/dashboard" class="sidebar-item"><span class="sidebar-icon">📊</span><span>Статистика</span></a>
+        <a href="/moderators" class="sidebar-item"><span class="sidebar-icon">👥</span><span>Модераторы</span></a>
+        <a href="/settings" class="sidebar-item"><span class="sidebar-icon">⚙️</span><span>Настройки</span></a>
+        <a href="/widgets" class="sidebar-item active"><span class="sidebar-icon">🧩</span><span>Виджеты для OBS</span></a>
+    </div>
+    <div class="overlay" id="overlay"></div>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <img src="/assets/logo.png" alt="LakeBot" class="logo-img" onerror="this.src='https://placehold.co/40x40/9146ff/white?text=LB'">
+                <span class="logo-text">LakeBot</span>
+            </div>
+            <div id="authSection">
+                <a href="/auth/twitch" class="auth-btn">🔐 Войти через Twitch</a>
+            </div>
+        </div>
+    </header>
+    <main class="container">
+        <div class="hero">
+            <h1 id="heroTitle">🧩 Виджеты для OBS</h1>
+            <p id="heroDesc">Скопируйте URL и добавьте как источник "Браузер" в OBS Studio</p>
+        </div>
+        <div class="widgets-grid">
+            <div class="widget-card">
+                <div class="widget-header">
+                    <h3 id="widgetPlayerTitle">🎬 Видеоплеер</h3>
+                    <span class="widget-id">player</span>
+                </div>
+                <div class="widget-preview"><iframe src="/widgets/player.html" frameborder="0"></iframe></div>
+                <div class="widget-url">
+                    <input type="text" id="playerUrl" readonly value="http://localhost:3000/widgets/player.html">
+                    <button class="copy-btn" onclick="copyToClipboard('playerUrl')">📋 Копировать</button>
+                </div>
+                <div class="widget-hint"><span id="sizeLabelPlayer">📐 Рекомендуемый размер:</span><span class="size">1280x720</span></div>
+            </div>
+            <div class="widget-card">
+                <div class="widget-header">
+                    <h3 id="widget1Title">🎧 Сейчас играет</h3>
+                    <span class="widget-id">nowplaying</span>
+                </div>
+                <div class="widget-preview"><iframe src="/widgets/nowplaying.html" frameborder="0"></iframe></div>
+                <div class="widget-url">
+                    <input type="text" id="npUrl" readonly value="http://localhost:3000/widgets/nowplaying.html">
+                    <button class="copy-btn" onclick="copyToClipboard('npUrl')">📋 Копировать</button>
+                </div>
+                <div class="widget-hint"><span id="sizeLabel1">📐 Рекомендуемый размер:</span><span class="size">400x120</span></div>
+            </div>
+            <div class="widget-card">
+                <div class="widget-header">
+                    <h3 id="widget2Title">📋 Очередь заказов</h3>
+                    <span class="widget-id">queue</span>
+                </div>
+                <div class="widget-preview"><iframe src="/widgets/queue.html" frameborder="0"></iframe></div>
+                <div class="widget-url">
+                    <input type="text" id="queueUrl" readonly value="http://localhost:3000/widgets/queue.html">
+                    <button class="copy-btn" onclick="copyToClipboard('queueUrl')">📋 Копировать</button>
+                </div>
+                <div class="widget-hint"><span id="sizeLabel2">📐 Рекомендуемый размер:</span><span class="size">400x300</span></div>
+            </div>
+            <div class="widget-card">
+                <div class="widget-header">
+                    <h3 id="widget3Title">📜 История заказов</h3>
+                    <span class="widget-id">history</span>
+                </div>
+                <div class="widget-preview"><iframe src="/widgets/history.html" frameborder="0"></iframe></div>
+                <div class="widget-url">
+                    <input type="text" id="historyUrl" readonly value="http://localhost:3000/widgets/history.html">
+                    <button class="copy-btn" onclick="copyToClipboard('historyUrl')">📋 Копировать</button>
+                </div>
+                <div class="widget-hint"><span id="sizeLabel3">📐 Рекомендуемый размер:</span><span class="size">400x300</span></div>
+            </div>
+        </div>
+    </main>
+    <footer class="footer">
+        <p id="footerText">LakeBot — музыкальный бот для Twitch | Виджеты для OBS</p>
+    </footer>
+    <script src="/js/theme.js"></script>
+    <script>
+        document.querySelectorAll('.sidebar-item').forEach(item => {
+            if (item.getAttribute('href') === window.location.pathname) item.classList.add('active');
+        });
+
+        let currentLanguage = 'ru', currentUser = null;
+        const translations = {
+            ru: { home: 'Главная', music: 'Музыка', dashboard: 'Статистика', moderators: 'Модераторы', settings: 'Настройки', widgets: 'Виджеты для OBS', heroTitle: '🧩 Виджеты для OBS', heroDesc: 'Скопируйте URL и добавьте как источник "Браузер" в OBS Studio', widgetPlayerTitle: '🎬 Видеоплеер', widget1Title: '🎧 Сейчас играет', widget2Title: '📋 Очередь заказов', widget3Title: '📜 История заказов', sizeLabel: '📐 Рекомендуемый размер:', footer: 'LakeBot — музыкальный бот для Twitch | Виджеты для OBS', authBtn: '🔐 Войти через Twitch' },
+            en: { home: 'Home', music: 'Music', dashboard: 'Dashboard', moderators: 'Moderators', settings: 'Settings', widgets: 'OBS Widgets', heroTitle: '🧩 OBS Widgets', heroDesc: 'Copy the URL and add as "Browser" source in OBS Studio', widgetPlayerTitle: '🎬 Video Player', widget1Title: '🎧 Now Playing', widget2Title: '📋 Order Queue', widget3Title: '📜 Order History', sizeLabel: '📐 Recommended size:', footer: 'LakeBot — music bot for Twitch | OBS Widgets', authBtn: '🔐 Login with Twitch' }
+        };
+
+        function updateAllText() {
+            const t = translations[currentLanguage] || translations.ru;
+            const texts = ['home','music','dashboard','moderators','settings','widgets'];
+            document.querySelectorAll('.sidebar-item').forEach((item,i)=>{ if(i<texts.length){ const span = item.querySelector('span:last-child'); if(span) span.textContent = t[texts[i]]; } });
+            document.getElementById('heroTitle').innerHTML = t.heroTitle;
+            document.getElementById('heroDesc').textContent = t.heroDesc;
+            document.getElementById('widgetPlayerTitle').innerHTML = t.widgetPlayerTitle;
+            document.getElementById('widget1Title').innerHTML = t.widget1Title;
+            document.getElementById('widget2Title').innerHTML = t.widget2Title;
+            document.getElementById('widget3Title').innerHTML = t.widget3Title;
+            document.querySelectorAll('.widget-hint span:first-child').forEach(l => { if(l) l.textContent = t.sizeLabel; });
+            document.getElementById('footerText').textContent = t.footer;
+            const authSection = document.getElementById('authSection');
+            if (authSection) {
+                if (currentUser) {
+                    authSection.innerHTML = `<div class="user-info"><span>${currentUser.username}</span><div class="user-avatar">${currentUser.username.charAt(0).toUpperCase()}</div></div>`;
+                } else {
+                    authSection.innerHTML = `<a href="/auth/twitch" class="auth-btn">${t.authBtn}</a>`;
+                }
+            }
+        }
+
+        async function loadLanguage() { try { const res = await fetch('/api/settings'); const settings = await res.json(); if (settings.language) { currentLanguage = settings.language; updateAllText(); } } catch(e) {} }
+        async function checkAuth() { try { const res = await fetch('/api/auth/me'); const data = await res.json(); if (data.authenticated && data.user) { currentUser = data.user; updateAllText(); } } catch(e) {} }
+
+        function copyToClipboard(elementId) { const input = document.getElementById(elementId); input.select(); input.setSelectionRange(0,99999); document.execCommand('copy'); const btn = input.nextElementSibling; const originalText = btn.textContent; btn.textContent = '✅ Copied!'; setTimeout(() => { btn.textContent = originalText; }, 2000); }
+
+        loadLanguage(); checkAuth();
+    </script>
+</body>
+</html>

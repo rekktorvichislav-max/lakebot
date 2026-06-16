@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LakeBot - Музыка</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/global.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; transition: background 0.3s, color 0.3s; min-height: 100vh; }
+
+        .burger-menu {
+            position: fixed; top: 20px; left: 20px; z-index: 1000; cursor: pointer;
+            background: rgba(145,70,255,0.2); backdrop-filter: blur(10px);
+            padding: 12px; border-radius: 16px; border: 1px solid rgba(145,70,255,0.3);
+            transition: all 0.3s;
+        }
+        .burger-menu:hover { transform: scale(1.05); background: rgba(145,70,255,0.4); }
+        .burger-line { width: 30px; height: 3px; margin: 6px 0; border-radius: 3px; transition: all 0.3s; }
+        .burger-menu.active .burger-line:nth-child(1) { transform: rotate(45deg) translate(6px,6px); }
+        .burger-menu.active .burger-line:nth-child(2) { opacity: 0; transform: translateX(-10px); }
+        .burger-menu.active .burger-line:nth-child(3) { transform: rotate(-45deg) translate(6px,-6px); }
+
+        .sidebar {
+            position: fixed; top: 0; left: -300px; width: 280px; height: 100vh;
+            z-index: 999; transition: left 0.4s ease; padding: 80px 0 20px; overflow-y: auto;
+        }
+        .sidebar.open { left: 0; }
+        .sidebar-item {
+            display: flex; align-items: center; gap: 14px; padding: 16px 24px;
+            text-decoration: none; font-weight: 600; transition: all 0.3s;
+            margin: 4px 12px; border-radius: 12px;
+        }
+        .sidebar-item:hover { transform: translateX(8px); }
+        .sidebar-icon { font-size: 20px; width: 28px; }
+
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+            z-index: 998; opacity: 0; visibility: hidden; transition: all 0.3s;
+        }
+        .overlay.active { opacity: 1; visibility: visible; }
+
+        .header { padding: 16px 32px; }
+        .header-content { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        .logo { display: flex; align-items: center; gap: 12px; }
+        .logo-img { width: 40px; height: 40px; border-radius: 12px; object-fit: cover; }
+        .logo-text { font-size: 24px; font-weight: 700; background: linear-gradient(135deg, #9146ff, #b87cff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .auth-btn {
+            background: linear-gradient(135deg, #9146ff, #5a2a9e);
+            border: none; border-radius: 40px; padding: 10px 24px;
+            color: white; font-weight: 600; cursor: pointer; text-decoration: none;
+            transition: all 0.3s;
+        }
+        .auth-btn:hover { transform: scale(1.05); }
+        .user-info { display: flex; align-items: center; gap: 12px; }
+        .user-avatar { width: 36px; height: 36px; border-radius: 50%; background: #9146ff; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 32px; }
+
+        .video-player-card { border-radius: 28px; padding: 20px; margin-bottom: 32px; }
+        .video-container { position: relative; width: 100%; padding-bottom: 56.25%; border-radius: 20px; overflow: hidden; background: #000; }
+        .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; border-radius: 16px; }
+        .video-placeholder { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 16px; border-radius: 16px; }
+        body.purple .video-placeholder { background: linear-gradient(135deg, #1a0a2e, #0d0418); color: #9146ff; }
+        body.dark .video-placeholder { background: linear-gradient(135deg, #1a1a1a, #0a0a0a); color: #fff; }
+        body.light .video-placeholder { background: linear-gradient(135deg, #ffffff, #f0f0ff); color: #9146ff; }
+
+        .now-playing-card { border-radius: 28px; padding: 20px; margin-bottom: 32px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+        .np-thumbnail { width: 80px; height: 80px; border-radius: 16px; overflow: hidden; flex-shrink: 0; }
+        .np-thumbnail img { width: 100%; height: 100%; object-fit: cover; }
+        .np-info { flex: 1; }
+        .np-label { font-size: 11px; text-transform: uppercase; letter-spacing: 3px; color: #9146ff; margin-bottom: 6px; font-weight: 600; }
+        .np-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+        .np-user { font-size: 13px; margin-bottom: 6px; }
+        body.purple .np-user { color: #ffd700; }
+        body.dark .np-user { color: #ffd700; }
+        body.light .np-user { color: #ff8c00; }
+        .np-votes { font-size: 12px; opacity: 0.8; font-weight: 500; }
+        .np-controls { display: flex; gap: 12px; flex-shrink: 0; }
+
+        .control-btn { padding: 10px 20px; border-radius: 40px; font-weight: 600; cursor: pointer; border: none; transition: all 0.3s; }
+        .control-btn:hover { transform: translateY(-2px); filter: brightness(1.05); }
+        .skip-btn { background: #e94560; color: white; }
+        .vote-btn { background: #ffd93d; color: #1a1a2e; }
+        .back-btn { background: #6c5ce7; color: white; }
+
+        .queue-card { border-radius: 28px; padding: 24px; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid rgba(145,70,255,0.2); }
+        .card-header h2 { font-size: 20px; font-weight: 700; }
+        .add-song-form { display: flex; gap: 12px; margin-bottom: 20px; }
+        .song-input { flex: 1; border-radius: 14px; padding: 12px 16px; font-size: 14px; transition: all 0.3s; }
+        body.purple .song-input { background: #0d0418; border: 1px solid rgba(145,70,255,0.3); color: #e8d5ff; }
+        body.dark .song-input { background: #0a0a0a; border: 1px solid #333; color: #fff; }
+        body.light .song-input { background: #ffffff; border: 1px solid #9146ff; color: #1a1a2e; }
+        .song-input:focus { outline: none; border-color: #9146ff; }
+        .add-btn { background: linear-gradient(135deg, #9146ff, #5a2a9e); border: none; border-radius: 14px; padding: 12px 24px; color: white; font-weight: 600; cursor: pointer; }
+        .clear-btn { background: rgba(255,107,107,0.2); border: 1px solid #ff6b6b; border-radius: 12px; padding: 8px 16px; color: #ff6b6b; font-weight: 600; cursor: pointer; }
+
+        .queue-list { max-height: 400px; overflow-y: auto; }
+        .queue-item { display: flex; align-items: center; gap: 14px; padding: 12px; border-bottom: 1px solid rgba(145,70,255,0.1); transition: all 0.3s; }
+        .queue-item:hover { background: rgba(145,70,255,0.05); transform: translateX(4px); border-radius: 12px; }
+        .queue-number { font-weight: 700; color: #9146ff; width: 35px; font-size: 14px; }
+        .queue-info { flex: 1; }
+        .queue-title { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+        .queue-user { font-size: 11px; color: #ffd700; }
+        .empty-queue { text-align: center; padding: 40px; opacity: 0.6; font-weight: 500; }
+
+        .footer { text-align: center; padding: 32px; border-top: 1px solid rgba(145,70,255,0.2); margin-top: 48px; font-weight: 500; }
+
+        @media (max-width:768px){ .now-playing-card { flex-direction: column; text-align: center; } .add-song-form { flex-direction: column; } .container { padding: 20px; } }
+    </style>
+</head>
+<body>
+    <div class="burger-menu" id="burgerMenu">
+        <div class="burger-line"></div>
+        <div class="burger-line"></div>
+        <div class="burger-line"></div>
+    </div>
+    <div class="sidebar" id="sidebar">
+        <a href="/" class="sidebar-item"><span class="sidebar-icon">🏠</span><span>Главная</span></a>
+        <a href="/music" class="sidebar-item active"><span class="sidebar-icon">🎵</span><span>Музыка</span></a>
+        <a href="/dashboard" class="sidebar-item"><span class="sidebar-icon">📊</span><span>Статистика</span></a>
+        <a href="/moderators" class="sidebar-item"><span class="sidebar-icon">👥</span><span>Модераторы</span></a>
+        <a href="/settings" class="sidebar-item"><span class="sidebar-icon">⚙️</span><span>Настройки</span></a>
+        <a href="/widgets" class="sidebar-item"><span class="sidebar-icon">🧩</span><span>Виджеты для OBS</span></a>
+    </div>
+    <div class="overlay" id="overlay"></div>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <img src="/assets/logo.png" alt="LakeBot" class="logo-img" onerror="this.src='https://placehold.co/40x40/9146ff/white?text=LB'">
+                <span class="logo-text">LakeBot</span>
+            </div>
+            <div id="authSection">
+                <a href="/auth/twitch" class="auth-btn">🔐 Войти через Twitch</a>
+            </div>
+        </div>
+    </header>
+    <main class="container">
+        <div class="video-player-card">
+            <div class="video-container" id="videoContainer">
+                <div id="videoPlaceholder" class="video-placeholder">
+                    <div>🎵</div>
+                    <div id="placeholderText">Ожидание трека...</div>
+                </div>
+                <iframe id="videoPlayer" style="display:none;" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+            </div>
+        </div>
+        <div class="now-playing-card">
+            <div class="np-thumbnail">
+                <img id="npThumb" src="https://i.ytimg.com/vi/default/mqdefault.jpg">
+            </div>
+            <div class="np-info">
+                <div class="np-label" id="nowPlayingLabel">СЕЙЧАС ИГРАЕТ</div>
+                <div class="np-title" id="npTitle">Нет активного трека</div>
+                <div class="np-user" id="npUser">—</div>
+                <div class="np-votes" id="npVotes">🎫 Голосов: 0/2</div>
+            </div>
+            <div class="np-controls">
+                <button class="control-btn back-btn" id="backBtn" onclick="backTrack()">◀ Назад</button>
+                <button class="control-btn skip-btn" id="skipBtn" onclick="skipTrack()">⏭ Пропустить</button>
+                <button class="control-btn vote-btn" id="voteBtn" onclick="voteSkip()">🗳 Голосовать</button>
+            </div>
+        </div>
+        <div class="queue-card">
+            <div class="card-header">
+                <h2 id="queueTitle">📋 Очередь заказов</h2>
+                <button class="clear-btn" id="clearBtn" onclick="clearQueue()">🗑 Очистить</button>
+            </div>
+            <div class="add-song-form">
+                <input type="text" class="song-input" id="songUrl" placeholder="Вставьте ссылку YouTube...">
+                <button class="add-btn" id="addBtn" onclick="addSong()">🎵 ЗАКАЗАТЬ</button>
+            </div>
+            <div class="queue-list" id="queueList">
+                <div class="empty-queue" id="emptyQueue">✨ Очередь пуста ✨</div>
+            </div>
+        </div>
+    </main>
+    <footer class="footer">
+        <p id="footerText">LakeBot — музыкальный бот для Twitch | Музыка</p>
+    </footer>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/theme.js"></script>
+    <script>
+        document.querySelectorAll('.sidebar-item').forEach(item => {
+            if (item.getAttribute('href') === window.location.pathname) item.classList.add('active');
+        });
+
+        let currentLanguage = 'ru', currentUser = null, currentVideoId = null;
+        const translations = {
+            ru: { home: 'Главная', music: 'Музыка', dashboard: 'Статистика', moderators: 'Модераторы', settings: 'Настройки', widgets: 'Виджеты для OBS', nowPlaying: 'СЕЙЧАС ИГРАЕТ', noTrack: 'Нет активного трека', orderedBy: 'Заказал', votes: 'Голосов', back: '◀ Назад', skip: '⏭ Пропустить', vote: '🗳 Голосовать', queueTitle: '📋 Очередь заказов', clear: '🗑 Очистить', placeholder: 'Вставьте ссылку YouTube...', addBtn: '🎵 ЗАКАЗАТЬ', emptyQueue: '✨ Очередь пуста ✨', footer: 'LakeBot — музыкальный бот для Twitch | Музыка', waitingTrack: 'Ожидание трека...', authBtn: '🔐 Войти через Twitch', votesLabel: '🎫 Голосов: {votes}/{threshold}' },
+            en: { home: 'Home', music: 'Music', dashboard: 'Dashboard', moderators: 'Moderators', settings: 'Settings', widgets: 'OBS Widgets', nowPlaying: 'NOW PLAYING', noTrack: 'No active track', orderedBy: 'Ordered by', votes: 'Votes', back: '◀ Back', skip: '⏭ Skip', vote: '🗳 Vote', queueTitle: '📋 Order queue', clear: '🗑 Clear', placeholder: 'Paste YouTube link...', addBtn: '🎵 ORDER', emptyQueue: '✨ Queue is empty ✨', footer: 'LakeBot — music bot for Twitch | Music', waitingTrack: 'Waiting for track...', authBtn: '🔐 Login with Twitch', votesLabel: '🎫 Votes: {votes}/{threshold}' }
+        };
+
+        function updateAllText() {
+            const t = translations[currentLanguage] || translations.ru;
+            const texts = ['home','music','dashboard','moderators','settings','widgets'];
+            document.querySelectorAll('.sidebar-item').forEach((item,i)=>{ if(i<texts.length){ const span = item.querySelector('span:last-child'); if(span) span.textContent = t[texts[i]]; } });
+            document.getElementById('nowPlayingLabel').textContent = t.nowPlaying;
+            document.getElementById('backBtn').innerHTML = t.back;
+            document.getElementById('skipBtn').innerHTML = t.skip;
+            document.getElementById('voteBtn').innerHTML = t.vote;
+            document.getElementById('queueTitle').innerHTML = t.queueTitle;
+            document.getElementById('clearBtn').innerHTML = t.clear;
+            document.getElementById('songUrl').placeholder = t.placeholder;
+            document.getElementById('addBtn').innerHTML = t.addBtn;
+            document.getElementById('footerText').textContent = t.footer;
+            document.getElementById('placeholderText').textContent = t.waitingTrack;
+            if (document.getElementById('npTitle').textContent === 'No active track' || document.getElementById('npTitle').textContent === 'Нет активного трека') {
+                document.getElementById('npTitle').textContent = t.noTrack;
+            }
+            const authSection = document.getElementById('authSection');
+            if (authSection) {
+                if (currentUser) {
+                    authSection.innerHTML = `<div class="user-info"><span>${currentUser.username}</span><div class="user-avatar">${currentUser.username.charAt(0).toUpperCase()}</div></div>`;
+                } else {
+                    authSection.innerHTML = `<a href="/auth/twitch" class="auth-btn">${t.authBtn}</a>`;
+                }
+            }
+        }
+
+        async function loadLanguage() { try { const res = await fetch('/api/settings'); const settings = await res.json(); if (settings.language) { currentLanguage = settings.language; updateAllText(); } } catch(e) {} }
+
+        async function checkAuth() { try { const res = await fetch('/api/auth/me'); const data = await res.json(); if (data.authenticated && data.user) { currentUser = data.user; updateAllText(); } } catch(e) {} }
+
+        async function addSong() { const url = document.getElementById('songUrl').value.trim(); if (!url) { showNotification(currentLanguage === 'ru' ? 'Введите ссылку на YouTube' : 'Enter YouTube link', 'error'); return; } const btn = document.querySelector('.add-btn'); const originalText = btn.textContent; btn.textContent = currentLanguage === 'ru' ? '⏳ Загрузка...' : '⏳ Loading...'; btn.disabled = true; try { const res = await fetch('/api/add', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url, user: currentUser?.username || 'Guest', userId: currentUser?.id }) }); const data = await res.json(); showNotification(data.message, data.success ? 'success' : 'error'); if (data.success) { document.getElementById('songUrl').value = ''; loadQueue(); } } catch(e) { showNotification(currentLanguage === 'ru' ? 'Ошибка подключения к серверу' : 'Server connection error', 'error'); } finally { btn.textContent = originalText; btn.disabled = false; } }
+
+        async function skipTrack() { if (!confirm(currentLanguage === 'ru' ? 'Пропустить текущий трек?' : 'Skip current track?')) return; try { const res = await fetch('/api/skip', { method: 'POST' }); const data = await res.json(); showNotification(data.message, data.success ? 'success' : 'error'); } catch(e) { showNotification(currentLanguage === 'ru' ? 'Ошибка' : 'Error', 'error'); } }
+
+        async function backTrack() { try { const res = await fetch('/api/back', { method: 'POST' }); const data = await res.json(); showNotification(data.message, data.success ? 'success' : 'error'); if (data.success) loadQueue(); } catch(e) { showNotification(currentLanguage === 'ru' ? 'Ошибка' : 'Error', 'error'); } }
+
+        async function voteSkip() { try { const res = await fetch('/api/vote', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user: currentUser?.username || 'Guest' }) }); const data = await res.json(); showNotification(data.message, 'info'); } catch(e) { showNotification(currentLanguage === 'ru' ? 'Ошибка' : 'Error', 'error'); } }
+
+        async function clearQueue() { if (!confirm(currentLanguage === 'ru' ? 'Очистить всю очередь?' : 'Clear entire queue?')) return; try { const res = await fetch('/api/clear', { method: 'POST' }); const data = await res.json(); showNotification(data.message, 'success'); loadQueue(); } catch(e) { showNotification(currentLanguage === 'ru' ? 'Ошибка' : 'Error', 'error'); } }
+
+        async function loadQueue() { try { const res = await fetch('/api/queue'); const data = await res.json(); updateQueueUI(data.queue); updateNowPlaying(data.current); } catch(e) {} }
+
+        function updateQueueUI(queue) { const container = document.getElementById('queueList'); if (!queue || queue.length === 0) { container.innerHTML = `<div class="empty-queue">${translations[currentLanguage]?.emptyQueue || '✨ Очередь пуста ✨'}</div>`; return; } container.innerHTML = queue.map((item, idx) => `<div class="queue-item"><div class="queue-number">${idx + 1}</div><div class="queue-info"><div class="queue-title">${escapeHtml(item.title || item.video_id)}</div><div class="queue-user">👤 ${escapeHtml(item.userName)}</div></div></div>`).join(''); }
+
+        function updateNowPlaying(current) { const videoPlayer = document.getElementById('videoPlayer'), videoPlaceholder = document.getElementById('videoPlaceholder'), t = translations[currentLanguage] || translations.ru; if (current && current.video_id) { document.getElementById('npTitle').textContent = current.title || current.video_id; document.getElementById('npUser').textContent = `👤 ${t.orderedBy}: ${current.userName}`; document.getElementById('npThumb').src = current.thumbnail || `https://i.ytimg.com/vi/${current.video_id}/mqdefault.jpg`; if (current.video_id !== currentVideoId) { currentVideoId = current.video_id; videoPlaceholder.style.display = 'none'; videoPlayer.style.display = 'block'; videoPlayer.src = `https://www.youtube-nocookie.com/embed/${current.video_id}?autoplay=1&enablejsapi=1&origin=${window.location.origin}`; } } else { document.getElementById('npTitle').textContent = t.noTrack; document.getElementById('npUser').textContent = '—'; document.getElementById('npThumb').src = 'https://i.ytimg.com/vi/default/mqdefault.jpg'; videoPlaceholder.style.display = 'flex'; videoPlayer.style.display = 'none'; videoPlayer.src = ''; currentVideoId = null; } }
+
+        function showNotification(message, type) { const notif = document.createElement('div'); notif.textContent = message; notif.className = 'notification'; notif.style.background = type === 'success' ? '#44ff88' : type === 'error' ? '#ff5555' : '#9146ff'; notif.style.color = type === 'success' ? '#0a0a1a' : 'white'; document.body.appendChild(notif); setTimeout(() => notif.remove(), 3000); }
+
+        function escapeHtml(text) { const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
+
+        const socket = io(); socket.on('queueUpdate', (data) => updateQueueUI(data)); socket.on('currentUpdate', (data) => updateNowPlaying(data)); socket.on('voteUpdate', (data) => { const t = translations[currentLanguage] || translations.ru; document.getElementById('npVotes').textContent = t.votesLabel.replace('{votes}', data.votes).replace('{threshold}', data.threshold); });
+
+        document.getElementById('songUrl').addEventListener('keypress', (e) => { if (e.key === 'Enter') addSong(); });
+
+        loadLanguage(); checkAuth(); loadQueue();
+
+        // Обновляем голоса при загрузке
+        setTimeout(() => {
+            const npVotes = document.getElementById('npVotes');
+            if (npVotes) {
+                const match = npVotes.textContent.match(/\d+/g);
+                const t = translations[currentLanguage] || translations.ru;
+                if (match) {
+                    npVotes.textContent = t.votesLabel.replace('{votes}', match[0] || '0').replace('{threshold}', match[1] || '2');
+                }
+            }
+        }, 500);
+    </script>
+</body>
+</html>

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LakeBot - Модераторы</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/global.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; transition: background 0.3s, color 0.3s; min-height: 100vh; }
+
+        .burger-menu {
+            position: fixed; top: 20px; left: 20px; z-index: 1000; cursor: pointer;
+            background: rgba(145,70,255,0.2); backdrop-filter: blur(10px);
+            padding: 12px; border-radius: 16px; border: 1px solid rgba(145,70,255,0.3);
+            transition: all 0.3s;
+        }
+        .burger-menu:hover { transform: scale(1.05); background: rgba(145,70,255,0.4); }
+        .burger-line { width: 30px; height: 3px; margin: 6px 0; border-radius: 3px; transition: all 0.3s; }
+        .burger-menu.active .burger-line:nth-child(1) { transform: rotate(45deg) translate(6px,6px); }
+        .burger-menu.active .burger-line:nth-child(2) { opacity: 0; transform: translateX(-10px); }
+        .burger-menu.active .burger-line:nth-child(3) { transform: rotate(-45deg) translate(6px,-6px); }
+
+        .sidebar {
+            position: fixed; top: 0; left: -300px; width: 280px; height: 100vh;
+            z-index: 999; transition: left 0.4s ease; padding: 80px 0 20px; overflow-y: auto;
+        }
+        .sidebar.open { left: 0; }
+        .sidebar-item {
+            display: flex; align-items: center; gap: 14px; padding: 16px 24px;
+            text-decoration: none; font-weight: 600; transition: all 0.3s;
+            margin: 4px 12px; border-radius: 12px;
+        }
+        .sidebar-item:hover { transform: translateX(8px); }
+        .sidebar-icon { font-size: 20px; width: 28px; }
+
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+            z-index: 998; opacity: 0; visibility: hidden; transition: all 0.3s;
+        }
+        .overlay.active { opacity: 1; visibility: visible; }
+
+        .header { padding: 16px 32px; }
+        .header-content { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        .logo { display: flex; align-items: center; gap: 12px; }
+        .logo-img { width: 40px; height: 40px; border-radius: 12px; object-fit: cover; }
+        .logo-text { font-size: 24px; font-weight: 700; background: linear-gradient(135deg, #9146ff, #b87cff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .auth-btn {
+            background: linear-gradient(135deg, #9146ff, #5a2a9e);
+            border: none; border-radius: 40px; padding: 10px 24px;
+            color: white; font-weight: 600; cursor: pointer; text-decoration: none;
+            transition: all 0.3s;
+        }
+        .auth-btn:hover { transform: scale(1.05); }
+        .user-info { display: flex; align-items: center; gap: 12px; }
+        .user-avatar { width: 36px; height: 36px; border-radius: 50%; background: #9146ff; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+
+        .container { max-width: 800px; margin: 0 auto; padding: 32px; }
+        .moderators-card { backdrop-filter: blur(10px); border-radius: 28px; padding: 28px; margin-bottom: 24px; }
+        .moderators-card h2 { margin-bottom: 20px; color: #9146ff; font-weight: 700; }
+
+        .search-container { margin-bottom: 24px; }
+        .search-input-wrapper { position: relative; }
+        .search-input { width: 100%; border-radius: 14px; padding: 14px 16px; font-size: 14px; transition: all 0.3s; }
+        body.purple .search-input { background: #0d0418; border: 1px solid rgba(145,70,255,0.3); color: #e8d5ff; }
+        body.dark .search-input { background: #0a0a0a; border: 1px solid #333; color: #fff; }
+        body.light .search-input { background: #ffffff; border: 1px solid #9146ff; color: #1a1a2e; }
+        .search-input:focus { outline: none; border-color: #9146ff; }
+
+        .search-results { position: absolute; top: 100%; left: 0; right: 0; border-radius: 14px; margin-top: 8px; z-index: 100; max-height: 300px; overflow-y: auto; display: none; }
+        body.purple .search-results { background: #1a1a2e; border: 1px solid rgba(145,70,255,0.3); }
+        body.dark .search-results { background: #2a2a2a; border: 1px solid #333; }
+        body.light .search-results { background: #ffffff; border: 1px solid #9146ff; }
+
+        .search-result-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; cursor: pointer; transition: all 0.2s; border-bottom: 1px solid rgba(145,70,255,0.1); }
+        .search-result-item:hover { background: rgba(145,70,255,0.1); }
+        .search-result-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+        .search-result-info { flex: 1; }
+        .search-result-name { font-weight: 600; }
+        .search-result-login { font-size: 12px; opacity: 0.7; }
+        .add-moderator-btn { background: linear-gradient(135deg, #9146ff, #5a2a9e); border: none; border-radius: 12px; padding: 6px 16px; color: white; font-weight: 600; cursor: pointer; }
+
+        .moderators-list { list-style: none; }
+        .moderator-item { display: flex; justify-content: space-between; align-items: center; padding: 14px; border-bottom: 1px solid rgba(145,70,255,0.1); }
+        .moderator-info { display: flex; align-items: center; gap: 12px; }
+        .moderator-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+        .moderator-name { font-size: 16px; font-weight: 600; }
+        .remove-btn { background: rgba(255,107,107,0.2); border: 1px solid #ff6b6b; border-radius: 8px; padding: 6px 16px; color: #ff6b6b; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .remove-btn:hover { background: rgba(255,107,107,0.4); }
+        .empty-list { text-align: center; padding: 40px; opacity: 0.6; font-weight: 500; }
+
+        .footer { text-align: center; padding: 32px; border-top: 1px solid rgba(145,70,255,0.2); margin-top: 48px; font-weight: 500; }
+
+        @media (max-width:768px){ .container { padding: 20px; } }
+    </style>
+</head>
+<body>
+    <div class="burger-menu" id="burgerMenu">
+        <div class="burger-line"></div>
+        <div class="burger-line"></div>
+        <div class="burger-line"></div>
+    </div>
+    <div class="sidebar" id="sidebar">
+        <a href="/" class="sidebar-item"><span class="sidebar-icon">🏠</span><span>Главная</span></a>
+        <a href="/music" class="sidebar-item"><span class="sidebar-icon">🎵</span><span>Музыка</span></a>
+        <a href="/dashboard" class="sidebar-item"><span class="sidebar-icon">📊</span><span>Статистика</span></a>
+        <a href="/moderators" class="sidebar-item active"><span class="sidebar-icon">👥</span><span>Модераторы</span></a>
+        <a href="/settings" class="sidebar-item"><span class="sidebar-icon">⚙️</span><span>Настройки</span></a>
+        <a href="/widgets" class="sidebar-item"><span class="sidebar-icon">🧩</span><span>Виджеты для OBS</span></a>
+    </div>
+    <div class="overlay" id="overlay"></div>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <img src="/assets/logo.png" alt="LakeBot" class="logo-img" onerror="this.src='https://placehold.co/40x40/9146ff/white?text=LB'">
+                <span class="logo-text">LakeBot</span>
+            </div>
+            <div id="authSection">
+                <a href="/auth/twitch" class="auth-btn">🔐 Войти через Twitch</a>
+            </div>
+        </div>
+    </header>
+    <main class="container">
+        <div class="moderators-card">
+            <h2 id="title">👥 Модераторы сайта</h2>
+            <p id="subtitle" style="margin-bottom:20px; opacity:0.7;">Найдите и добавьте пользователей Twitch, которые могут управлять ботом на этом сайте</p>
+            <div class="search-container">
+                <div class="search-input-wrapper">
+                    <input type="text" class="search-input" id="searchInput" placeholder="Поиск пользователей Twitch...">
+                    <div class="search-results" id="searchResults"></div>
+                </div>
+            </div>
+            <div id="moderatorsList">
+                <div class="empty-list" id="emptyList">📭 Модераторы не добавлены</div>
+            </div>
+        </div>
+    </main>
+    <footer class="footer">
+        <p id="footerText">LakeBot — музыкальный бот для Twitch | Модераторы</p>
+    </footer>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/theme.js"></script>
+    <script>
+        document.querySelectorAll('.sidebar-item').forEach(item => {
+            if (item.getAttribute('href') === window.location.pathname) item.classList.add('active');
+        });
+
+        let currentLanguage = 'ru', currentUser = null, searchTimeout = null;
+        const translations = {
+            ru: { home: 'Главная', music: 'Музыка', dashboard: 'Статистика', moderators: 'Модераторы', settings: 'Настройки', widgets: 'Виджеты для OBS', title: '👥 Модераторы сайта', subtitle: 'Найдите и добавьте пользователей Twitch, которые могут управлять ботом на этом сайте', searchPlaceholder: 'Поиск пользователей Twitch...', empty: '📭 Модераторы не добавлены', footer: 'LakeBot — музыкальный бот для Twitch | Модераторы', remove: 'Удалить', authBtn: '🔐 Войти через Twitch' },
+            en: { home: 'Home', music: 'Music', dashboard: 'Dashboard', moderators: 'Moderators', settings: 'Settings', widgets: 'OBS Widgets', title: '👥 Website Moderators', subtitle: 'Search and add Twitch users who can manage the bot on this website', searchPlaceholder: 'Search Twitch users...', empty: '📭 No moderators added yet', footer: 'LakeBot — music bot for Twitch | Moderators', remove: 'Remove', authBtn: '🔐 Login with Twitch' }
+        };
+
+        function updateAllText() {
+            const t = translations[currentLanguage] || translations.ru;
+            const texts = ['home','music','dashboard','moderators','settings','widgets'];
+            document.querySelectorAll('.sidebar-item').forEach((item,i)=>{ if(i<texts.length){ const span = item.querySelector('span:last-child'); if(span) span.textContent = t[texts[i]]; } });
+            document.getElementById('title').innerHTML = t.title;
+            document.getElementById('subtitle').textContent = t.subtitle;
+            document.getElementById('searchInput').placeholder = t.searchPlaceholder;
+            document.getElementById('footerText').textContent = t.footer;
+            const authSection = document.getElementById('authSection');
+            if (authSection) {
+                if (currentUser) {
+                    authSection.innerHTML = `<div class="user-info"><span>${currentUser.username}</span><div class="user-avatar">${currentUser.username.charAt(0).toUpperCase()}</div></div>`;
+                } else {
+                    authSection.innerHTML = `<a href="/auth/twitch" class="auth-btn">${t.authBtn}</a>`;
+                }
+            }
+        }
+
+        async function loadLanguage() { try { const res = await fetch('/api/settings'); const settings = await res.json(); if (settings.language) { currentLanguage = settings.language; updateAllText(); } } catch(e) {} }
+        async function checkAuth() { try { const res = await fetch('/api/auth/me'); const data = await res.json(); if (data.authenticated && data.user) { currentUser = data.user; if (!currentUser.is_owner && !currentUser.isModerator) window.location.href = '/'; updateAllText(); } } catch(e) {} }
+        async function loadModerators() { try { const res = await fetch('/api/moderators'); const data = await res.json(); const container = document.getElementById('moderatorsList'); const t = translations[currentLanguage] || translations.ru; if (!data.moderators || data.moderators.length === 0) { container.innerHTML = `<div class="empty-list">${t.empty}</div>`; return; } container.innerHTML = data.moderators.map(mod => `<div class="moderator-item"><div class="moderator-info"><img src="${mod.avatar || 'https://static-cdn.jtvnw.net/user-default-pictures-uv/13e5fa74-defa-11e9-809c-784f43822e80-profile_image-50x50.png'}" class="moderator-avatar" onerror="this.src='https://static-cdn.jtvnw.net/user-default-pictures-uv/13e5fa74-defa-11e9-809c-784f43822e80-profile_image-50x50.png'"><span class="moderator-name">${escapeHtml(mod.username)}</span></div><button class="remove-btn" onclick="removeModerator('${escapeHtml(mod.username)}')">🗑 ${t.remove}</button></div>`).join(''); } }
+
+        async function searchTwitchUsers(query) { if (query.length < 2) { searchResults.style.display = 'none'; return; } try { const res = await fetch(`/api/search-twitch?q=${encodeURIComponent(query)}`); const data = await res.json(); if (data.users && data.users.length > 0) { searchResults.innerHTML = data.users.map(user => `<div class="search-result-item" onclick="addModeratorFromSearch('${escapeHtml(user.username)}', '${escapeHtml(user.avatar)}')"><img src="${user.avatar}" class="search-result-avatar" onerror="this.src='https://static-cdn.jtvnw.net/user-default-pictures-uv/13e5fa74-defa-11e9-809c-784f43822e80-profile_image-50x50.png'"><div class="search-result-info"><div class="search-result-name">${escapeHtml(user.display_name || user.username)}</div><div class="search-result-login">${escapeHtml(user.username)}</div></div><button class="add-moderator-btn">+ Добавить</button></div>`).join(''); searchResults.style.display = 'block'; } else { searchResults.innerHTML = '<div style="padding:12px;text-align:center;">Пользователи не найдены</div>'; searchResults.style.display = 'block'; } } catch(e) { searchResults.style.display = 'none'; } }
+
+        const searchInput = document.getElementById('searchInput'), searchResults = document.getElementById('searchResults');
+        searchInput.addEventListener('input', (e) => { if (searchTimeout) clearTimeout(searchTimeout); searchTimeout = setTimeout(() => { searchTwitchUsers(e.target.value); }, 500); });
+        document.addEventListener('click', (e) => { if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) searchResults.style.display = 'none'; });
+
+        async function addModeratorFromSearch(username, avatar) { try { const res = await fetch('/api/moderators/add', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, avatar, added_by: currentUser?.username }) }); const data = await res.json(); showNotification(data.message, data.success ? 'success' : 'error'); if (data.success) { searchInput.value = ''; searchResults.style.display = 'none'; loadModerators(); } } catch(e) { showNotification('Ошибка добавления модератора', 'error'); } }
+
+        async function removeModerator(username) { if (!confirm(currentLanguage === 'ru' ? `Удалить ${username} из модераторов?` : `Remove ${username} from moderators?`)) return; try { const res = await fetch('/api/moderators/remove', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username }) }); const data = await res.json(); if (data.success) loadModerators(); showNotification(currentLanguage === 'ru' ? 'Модератор удалён' : 'Moderator removed', 'success'); } catch(e) {} }
+
+        function showNotification(message, type) { const notif = document.createElement('div'); notif.textContent = message; notif.className = 'notification'; notif.style.background = type === 'success' ? '#44ff88' : type === 'error' ? '#ff5555' : '#9146ff'; notif.style.color = type === 'success' ? '#0a0a1a' : 'white'; document.body.appendChild(notif); setTimeout(() => notif.remove(), 3000); }
+
+        function escapeHtml(text) { const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
+
+        loadLanguage(); checkAuth(); loadModerators();
+    </script>
+</body>
+</html>

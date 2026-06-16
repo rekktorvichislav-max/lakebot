@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LakeBot - Модерация</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/animations.css">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="logo">
+                <img src="assets/logo.png" alt="LakeBot" class="logo-img">
+                <span class="logo-text">LakeBot</span>
+            </div>
+            <nav class="nav-menu">
+                <a href="dashboard.html" class="nav-item">
+                    <span class="nav-icon">📊</span>
+                    <span>Панель управления</span>
+                </a>
+                <a href="music.html" class="nav-item">
+                    <span class="nav-icon">🎵</span>
+                    <span>Музыка</span>
+                </a>
+                <a href="commands.html" class="nav-item">
+                    <span class="nav-icon">💬</span>
+                    <span>Команды</span>
+                </a>
+                <a href="moderation.html" class="nav-item active">
+                    <span class="nav-icon">🛡️</span>
+                    <span>Модерация</span>
+                </a>
+                <a href="widgets.html" class="nav-item">
+                    <span class="nav-icon">📱</span>
+                    <span>Виджеты</span>
+                </a>
+                <a href="history.html" class="nav-item">
+                    <span class="nav-icon">📜</span>
+                    <span>История</span>
+                </a>
+                <a href="settings.html" class="nav-item">
+                    <span class="nav-icon">⚙️</span>
+                    <span>Настройки</span>
+                </a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="search-bar">
+                    <input type="text" placeholder="Поиск...">
+                </div>
+                <div class="user-menu">
+                    <span class="user-name">Стример</span>
+                    <div class="user-avatar">S</div>
+                </div>
+            </header>
+
+            <div class="content-area">
+                <h1>Модерация</h1>
+                
+                <!-- Ban Words -->
+                <div class="mod-card">
+                    <div class="section-header">
+                        <h2>Запрещённые слова</h2>
+                        <button class="add-word-btn" onclick="openAddWordModal()">➕ Добавить слово</button>
+                    </div>
+                    <div class="words-list" id="banWordsList">
+                        <div class="word-item">
+                            <span>sex</span>
+                            <button class="remove-word">🗑️</button>
+                        </div>
+                        <div class="word-item">
+                            <span>porn</span>
+                            <button class="remove-word">🗑️</button>
+                        </div>
+                        <div class="word-item">
+                            <span>nude</span>
+                            <button class="remove-word">🗑️</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Timeouts -->
+                <div class="mod-card">
+                    <div class="section-header">
+                        <h2>Таймаут пользователя</h2>
+                    </div>
+                    <div class="timeout-form">
+                        <input type="text" id="timeoutUser" placeholder="Имя пользователя" class="mod-input">
+                        <input type="number" id="timeoutDuration" placeholder="Длительность (сек)" class="mod-input" value="60">
+                        <button onclick="timeoutUser()" class="mod-btn">⏱️ ВЫДАТЬ ТАЙМАУТ</button>
+                    </div>
+                </div>
+
+                <!-- User Ban -->
+                <div class="mod-card">
+                    <div class="section-header">
+                        <h2>Бан пользователя</h2>
+                    </div>
+                    <div class="ban-form">
+                        <input type="text" id="banUser" placeholder="Имя пользователя" class="mod-input">
+                        <button onclick="banUser()" class="mod-btn ban-btn">🔨 ЗАБАНИТЬ</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Word Modal -->
+    <div id="addWordModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeAddWordModal()">&times;</span>
+            <h3>Добавить запрещённое слово</h3>
+            <input type="text" id="banWord" placeholder="Слово..." class="modal-input">
+            <button onclick="addBanWord()" class="modal-btn">Добавить</button>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script src="js/moderation.js"></script>
+</body>
+</html>

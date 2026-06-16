@@ -1,0 +1,1813 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LakeBot - Настройки</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/global.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background 0.3s ease, color 0.3s ease;
+            min-height: 100vh;
+        }
+
+        body.purple {
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a0a2e 30%, #2d1a4e 60%, #0a0a1a 100%);
+        }
+        body.dark {
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%);
+        }
+        body.light {
+            background: linear-gradient(135deg, #f0f0ff 0%, #ffffff 50%, #f5f0ff 100%);
+        }
+
+        /* ===== БУРГЕР-МЕНЮ ===== */
+        .burger-menu {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1001;
+            cursor: pointer;
+            background: rgba(145, 70, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 12px;
+            border-radius: 16px;
+            border: 1px solid rgba(145, 70, 255, 0.3);
+            transition: all 0.3s ease;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+        .burger-menu:hover {
+            transform: scale(1.05);
+            background: rgba(145, 70, 255, 0.4);
+        }
+        .burger-menu:active {
+            transform: scale(0.95);
+        }
+
+        .burger-line {
+            width: 30px;
+            height: 3px;
+            margin: 5px 0;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+        body.purple .burger-line {
+            background: #9146ff;
+        }
+        body.dark .burger-line {
+            background: #ffffff;
+        }
+        body.light .burger-line {
+            background: #9146ff;
+        }
+
+        .burger-menu.active .burger-line:nth-child(1) {
+            transform: translateY(8px) rotate(45deg);
+        }
+        .burger-menu.active .burger-line:nth-child(2) {
+            opacity: 0;
+            transform: scaleX(0);
+        }
+        .burger-menu.active .burger-line:nth-child(3) {
+            transform: translateY(-8px) rotate(-45deg);
+        }
+
+        /* ===== САЙДБАР ===== */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -100%;
+            width: 280px;
+            height: 100vh;
+            z-index: 1000;
+            padding: 80px 0 20px;
+            overflow-y: auto;
+            transition: left 0.3s ease;
+            overscroll-behavior: contain;
+        }
+        body.purple .sidebar {
+            background: linear-gradient(180deg, #140a20 0%, #0c0518 100%);
+            border-right: 1px solid rgba(145, 70, 255, 0.3);
+        }
+        body.dark .sidebar {
+            background: linear-gradient(180deg, #111111 0%, #0a0a0a 100%);
+            border-right: 1px solid #333;
+        }
+        body.light .sidebar {
+            background: linear-gradient(180deg, #ffffff 0%, #f5f5ff 100%);
+            border-right: 1px solid #9146ff;
+        }
+        .sidebar.open {
+            left: 0;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .sidebar::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+        }
+        .sidebar::-webkit-scrollbar-thumb {
+            background: #9146ff;
+            border-radius: 4px;
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 24px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 15px;
+            transition: all 0.2s ease;
+            margin: 2px 12px;
+            border-radius: 12px;
+            cursor: pointer;
+        }
+        body.purple .sidebar-item {
+            color: #c8b5e0;
+        }
+        body.dark .sidebar-item {
+            color: #bbbbbb;
+        }
+        body.light .sidebar-item {
+            color: #5555aa;
+        }
+        .sidebar-item:hover {
+            transform: translateX(6px);
+            background: rgba(145, 70, 255, 0.15);
+        }
+        .sidebar-item.active {
+            background: rgba(145, 70, 255, 0.2);
+            color: #e0ccff;
+        }
+        body.dark .sidebar-item.active {
+            background: rgba(255, 255, 255, 0.08);
+            color: #ffffff;
+        }
+        body.light .sidebar-item.active {
+            background: rgba(145, 70, 255, 0.08);
+            color: #9146ff;
+        }
+        .sidebar-icon {
+            font-size: 20px;
+            width: 28px;
+            flex-shrink: 0;
+        }
+
+        /* ===== ОВЕРЛЕЙ ===== */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        .overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* ===== ОСТАЛЬНЫЕ СТИЛИ ===== */
+        .header {
+            padding: 16px 32px;
+        }
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .logo-img {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            object-fit: cover;
+        }
+        .logo-text {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #9146ff, #b87cff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .auth-btn {
+            background: linear-gradient(135deg, #9146ff, #5a2a9e);
+            border: none;
+            border-radius: 40px;
+            padding: 10px 24px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .auth-btn:hover {
+            transform: scale(1.05);
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #9146ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 32px;
+        }
+        .hero {
+            text-align: center;
+            padding: 60px 20px;
+            border-radius: 48px;
+            margin-bottom: 48px;
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(145, 70, 255, 0.1);
+        }
+        .hero h1 {
+            font-size: 48px;
+            font-weight: 800;
+            margin-bottom: 16px;
+        }
+        body.purple .hero h1 {
+            background: linear-gradient(135deg, #fff, #b87cff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        body.light .hero h1 {
+            background: linear-gradient(135deg, #9146ff, #5a2a9e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        body.dark .hero h1 {
+            background: linear-gradient(135deg, #fff, #aaa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero p {
+            font-size: 18px;
+            opacity: 0.85;
+            font-weight: 500;
+        }
+
+        .settings-card {
+            backdrop-filter: blur(10px);
+            border-radius: 28px;
+            padding: 28px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(145, 70, 255, 0.1);
+        }
+        body.purple .settings-card {
+            background: rgba(26, 16, 46, 0.6);
+        }
+        body.dark .settings-card {
+            background: rgba(20, 20, 20, 0.7);
+        }
+        body.light .settings-card {
+            background: rgba(255, 255, 255, 0.85);
+        }
+        .settings-card h2 {
+            margin-bottom: 20px;
+            color: #9146ff;
+            font-weight: 700;
+            font-size: 22px;
+        }
+        .setting-row {
+            margin-bottom: 20px;
+        }
+        .setting-row label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .setting-row input,
+        .setting-row select {
+            width: 100%;
+            border-radius: 14px;
+            padding: 14px 18px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        body.purple .setting-row input {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(145, 70, 255, 0.3);
+            color: #e8d5ff;
+        }
+        body.dark .setting-row input {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid #333;
+            color: #fff;
+        }
+        body.light .setting-row input {
+            background: #fff;
+            border: 1px solid rgba(145, 70, 255, 0.3);
+            color: #1a1a2e;
+        }
+        .setting-row input:focus,
+        .setting-row select:focus {
+            outline: none;
+            border-color: #9146ff;
+            box-shadow: 0 0 0 2px rgba(145, 70, 255, 0.2);
+        }
+        .setting-row small {
+            display: block;
+            margin-top: 6px;
+            opacity: 0.6;
+            font-weight: 400;
+        }
+
+        .save-btn {
+            background: linear-gradient(135deg, #9146ff, #5a2a9e);
+            border: none;
+            border-radius: 40px;
+            padding: 14px 28px;
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            font-size: 15px;
+            display: block;
+            text-align: center;
+        }
+        .save-btn:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.05);
+            box-shadow: 0 5px 20px rgba(145, 70, 255, 0.3);
+        }
+
+        .lang-selector {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+        .lang-option {
+            flex: 1;
+            min-width: 120px;
+            padding: 16px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            font-weight: 600;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .lang-option:hover {
+            transform: translateY(-3px);
+        }
+        .lang-option.active {
+            border-color: #9146ff;
+            box-shadow: 0 0 20px rgba(145, 70, 255, 0.3);
+            background: rgba(145, 70, 255, 0.15);
+        }
+        .lang-option .flag {
+            font-size: 28px;
+        }
+        .lang-option .lang-name {
+            font-weight: 600;
+        }
+
+        .theme-preview {
+            display: flex;
+            gap: 16px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+        .theme-option {
+            flex: 1;
+            border-radius: 24px;
+            padding: 20px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            font-weight: 500;
+        }
+        .theme-option:hover {
+            transform: translateY(-4px);
+        }
+        .theme-option.selected {
+            border-color: #9146ff;
+            box-shadow: 0 0 15px rgba(145, 70, 255, 0.5);
+        }
+        .theme-purple-preview {
+            background: linear-gradient(135deg, #1a0a2e, #2d1a4e);
+            color: #e8d5ff;
+        }
+        .theme-dark-preview {
+            background: #1a1a1a;
+            color: #e0e0e0;
+        }
+        .theme-light-preview {
+            background: #f0f0ff;
+            color: #1a1a2e;
+        }
+        .theme-option h4 {
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+        .theme-option p {
+            font-size: 12px;
+            opacity: 0.7;
+            font-weight: 400;
+        }
+
+        .command-item {
+            border-radius: 20px;
+            padding: 20px 22px;
+            margin-bottom: 16px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(145, 70, 255, 0.1);
+        }
+        body.purple .command-item {
+            background: rgba(26, 16, 46, 0.7);
+            border-color: rgba(145, 70, 255, 0.2);
+        }
+        body.dark .command-item {
+            background: rgba(20, 20, 20, 0.7);
+            border-color: #333;
+        }
+        body.light .command-item {
+            background: rgba(255, 255, 255, 0.8);
+            border-color: rgba(145, 70, 255, 0.2);
+        }
+        .command-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .command-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        .command-name {
+            font-size: 20px;
+            font-weight: 700;
+            padding: 4px 16px;
+            border-radius: 30px;
+            font-family: 'Inter', monospace;
+            background: rgba(145, 70, 255, 0.2);
+            border: 1px solid rgba(145, 70, 255, 0.3);
+        }
+        .command-delete {
+            background: rgba(255, 85, 85, 0.15);
+            border: 1px solid rgba(255, 85, 85, 0.3);
+            border-radius: 30px;
+            padding: 6px 18px;
+            color: #ff6b6b;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            font-size: 13px;
+        }
+        .command-delete:hover {
+            background: rgba(255, 85, 85, 0.3);
+        }
+
+        .command-permissions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px 20px;
+            margin-bottom: 12px;
+        }
+        .perm-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+            padding: 4px 12px 4px 8px;
+            border-radius: 30px;
+            transition: all 0.2s ease;
+        }
+        body.purple .perm-checkbox {
+            background: rgba(145, 70, 255, 0.08);
+        }
+        body.dark .perm-checkbox {
+            background: rgba(255, 255, 255, 0.04);
+        }
+        body.light .perm-checkbox {
+            background: rgba(145, 70, 255, 0.06);
+        }
+        .perm-checkbox:hover {
+            background: rgba(145, 70, 255, 0.15);
+        }
+
+        .perm-checkbox input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: #9146ff;
+            cursor: pointer;
+        }
+
+        .command-cooldown {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 6px 16px 6px 12px;
+            border-radius: 40px;
+            background: rgba(0, 0, 0, 0.15);
+            width: fit-content;
+        }
+        .command-cooldown label {
+            margin: 0;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .command-cooldown input[type="number"] {
+            width: 55px;
+            padding: 6px 8px;
+            border-radius: 30px;
+            border: 1px solid rgba(145, 70, 255, 0.3);
+            background: rgba(0, 0, 0, 0.2);
+            color: inherit;
+            font-weight: 600;
+            font-size: 14px;
+            text-align: center;
+        }
+        .command-cooldown input[type="number"]:focus {
+            outline: none;
+            border-color: #9146ff;
+        }
+        .command-cooldown span {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .command-desc {
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(145, 70, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        .command-desc i {
+            opacity: 0.5;
+        }
+        .command-desc .desc-text {
+            font-weight: 400;
+        }
+
+        .add-command-form {
+            margin-top: 20px;
+            padding: 24px;
+            border-radius: 24px;
+            background: rgba(145, 70, 255, 0.06);
+            border: 1px dashed rgba(145, 70, 255, 0.3);
+            display: none;
+        }
+        .add-command-form.visible {
+            display: block;
+        }
+        .form-row {
+            margin-bottom: 16px;
+        }
+        .form-row label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .form-row input,
+        .form-row select {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 14px;
+            border: 1px solid rgba(145, 70, 255, 0.3);
+            background: rgba(0, 0, 0, 0.15);
+            color: inherit;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        .form-row input:focus,
+        .form-row select:focus {
+            outline: none;
+            border-color: #9146ff;
+        }
+        .form-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #9146ff, #5a2a9e);
+            border: none;
+            border-radius: 40px;
+            padding: 12px 28px;
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            flex: 1;
+            transition: all 0.2s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.05);
+        }
+        .btn-secondary {
+            background: rgba(255, 85, 85, 0.15);
+            border: 1px solid rgba(255, 85, 85, 0.3);
+            border-radius: 40px;
+            padding: 12px 28px;
+            color: #ff6b6b;
+            font-weight: 700;
+            cursor: pointer;
+            flex: 1;
+            transition: all 0.2s ease;
+        }
+        .btn-secondary:hover {
+            background: rgba(255, 85, 85, 0.25);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 32px;
+            border-top: 1px solid rgba(145, 70, 255, 0.2);
+            margin-top: 48px;
+            font-weight: 500;
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 14px 28px;
+            border-radius: 16px;
+            z-index: 1001;
+            animation: slideIn 0.3s ease-out;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .secret-container {
+            margin-top: 20px;
+            text-align: right;
+        }
+        .secret-page-btn {
+            background: rgba(145, 70, 255, 0.2);
+            border: 1px solid rgba(145, 70, 255, 0.3);
+            border-radius: 12px;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+        }
+        .secret-page-btn:hover {
+            background: rgba(145, 70, 255, 0.4);
+            transform: scale(1.02);
+        }
+        .secret-page-btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 52px;
+            height: 28px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #2a2f4e;
+            transition: 0.3s ease;
+            border-radius: 28px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s ease;
+            border-radius: 50%;
+        }
+        input:checked+.slider {
+            background-color: #9146ff;
+        }
+        input:checked+.slider:before {
+            transform: translateX(24px);
+        }
+
+        .unsaved-banner {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #ff6b35, #f7931e);
+            color: white;
+            padding: 12px 28px;
+            border-radius: 16px;
+            z-index: 9999;
+            font-weight: 600;
+            font-size: 14px;
+            box-shadow: 0 8px 30px rgba(255, 107, 53, 0.4);
+            display: none;
+            animation: slideDown 0.3s ease-out;
+            backdrop-filter: blur(10px);
+        }
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+        .unsaved-banner.show {
+            display: block;
+        }
+        .unsaved-banner .close-banner {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            margin-left: 16px;
+            opacity: 0.7;
+            transition: opacity 0.2s ease;
+        }
+        .unsaved-banner .close-banner:hover {
+            opacity: 1;
+        }
+
+        @media(max-width:768px) {
+            .container {
+                padding: 20px;
+            }
+            .command-permissions {
+                gap: 8px;
+            }
+            .command-cooldown {
+                width: 100%;
+                justify-content: center;
+            }
+            .command-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .unsaved-banner {
+                top: 70px;
+                width: 90%;
+                padding: 10px 16px;
+                font-size: 12px;
+            }
+            .burger-menu {
+                top: 14px;
+                left: 14px;
+                padding: 10px;
+            }
+            .sidebar {
+                width: 260px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="unsaved-banner" id="unsavedBanner">
+        <span id="unsavedText">⚠️ У вас есть несохранённые изменения</span>
+        <button class="close-banner" onclick="hideUnsavedBanner()">✕</button>
+    </div>
+
+    <audio id="secretSound1" preload="auto"><source src="/sounds/secret.mp3" type="audio/mpeg"></audio>
+    <audio id="secretSound2" preload="auto"><source src="/sounds/secret2.mp3" type="audio/mpeg"></audio>
+    <audio id="secretSound3" preload="auto"><source src="/sounds/secret3.mp3" type="audio/mpeg"></audio>
+    <audio id="secretSound4" preload="auto"><source src="/sounds/secret4.mp3" type="audio/mpeg"></audio>
+
+    <!-- БУРГЕР-МЕНЮ -->
+    <div class="burger-menu" id="burgerMenu">
+        <div class="burger-line"></div>
+        <div class="burger-line"></div>
+        <div class="burger-line"></div>
+    </div>
+
+    <!-- САЙДБАР -->
+    <div class="sidebar" id="sidebar">
+        <a href="/" class="sidebar-item"><span class="sidebar-icon">🏠</span><span id="sidebarHome">Главная</span></a>
+        <a href="/music" class="sidebar-item"><span class="sidebar-icon">🎵</span><span id="sidebarMusic">Музыка</span></a>
+        <a href="/dashboard" class="sidebar-item"><span class="sidebar-icon">📊</span><span id="sidebarDashboard">Статистика</span></a>
+        <a href="/moderators" class="sidebar-item"><span class="sidebar-icon">👥</span><span id="sidebarModerators">Модераторы</span></a>
+        <a href="/settings" class="sidebar-item active"><span class="sidebar-icon">⚙️</span><span id="sidebarSettings">Настройки</span></a>
+        <a href="/widgets" class="sidebar-item"><span class="sidebar-icon">🧩</span><span id="sidebarWidgets">Виджеты для OBS</span></a>
+    </div>
+
+    <!-- ОВЕРЛЕЙ -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- ХЕДЕР -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <img src="/assets/logo.png" alt="LakeBot" class="logo-img" onerror="this.src='https://placehold.co/40x40/9146ff/white?text=LB'">
+                <span class="logo-text">LakeBot</span>
+            </div>
+            <div id="authSection">
+                <a href="/auth/twitch" class="auth-btn">🔐 Войти через Twitch</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- ОСНОВНОЙ КОНТЕНТ -->
+    <main class="container">
+        <div class="hero">
+            <h1 id="heroTitle">Настройки LakeBot</h1>
+            <p id="heroDesc">Настройте бота под свои потребности</p>
+        </div>
+
+        <!-- ЯЗЫК -->
+        <div class="settings-card">
+            <h2 id="langTitle">🌍 Язык</h2>
+            <div class="lang-selector">
+                <div class="lang-option active" data-lang="ru" onclick="setLang('ru')">
+                    <span class="flag">🇷🇺</span>
+                    <span class="lang-name">Русский</span>
+                </div>
+                <div class="lang-option" data-lang="en" onclick="setLang('en')">
+                    <span class="flag">🇬🇧</span>
+                    <span class="lang-name">English</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ТЕМА -->
+        <div class="settings-card">
+            <h2 id="themeTitle">🎨 Оформление</h2>
+            <div class="theme-preview">
+                <div class="theme-option theme-purple-preview selected" data-theme="purple" onclick="setTheme('purple')">
+                    <h4 id="themePurpleTitle">🟣 Фиолетовая</h4>
+                    <p id="themePurpleDesc">Deep purple стиль (по умолчанию)</p>
+                </div>
+                <div class="theme-option theme-dark-preview" data-theme="dark" onclick="setTheme('dark')">
+                    <h4 id="themeDarkTitle">⚫ Тёмная</h4>
+                    <p id="themeDarkDesc">Чёрная тема</p>
+                </div>
+                <div class="theme-option theme-light-preview" data-theme="light" onclick="setTheme('light')">
+                    <h4 id="themeLightTitle">⚪ Светлая</h4>
+                    <p id="themeLightDesc">Белая тема</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- НАСТРОЙКИ МУЗЫКИ -->
+        <div class="settings-card">
+            <h2 id="musicSettingsTitle">🎵 Настройки музыки</h2>
+            <div class="setting-row">
+                <label id="maxDurationLabel">📺 Максимальная длительность видео (секунд)</label>
+                <input type="number" id="maxDuration" value="480" min="60" max="3600">
+                <small id="durationHint">8 минут = 480 секунд</small>
+            </div>
+            <div class="setting-row">
+                <label id="maxTracksLabel">🎵 Максимум треков на пользователя</label>
+                <input type="number" id="maxTracks" value="5" min="1" max="20">
+            </div>
+            <div class="setting-row">
+                <label id="voteThresholdLabel">🗳️ Порог голосования для пропуска</label>
+                <input type="number" id="voteThreshold" value="2" min="1" max="10">
+            </div>
+        </div>
+
+        <!-- КОМАНДЫ ЧАТА -->
+        <div class="settings-card">
+            <h2 id="chatCommandsTitle">💬 Команды Twitch чата</h2>
+            <div id="chatCommandsList" style="margin-bottom:20px; min-height:100px;">
+                <div style="text-align:center;padding:20px; color:#9146ff;">⏳ Загрузка команд...</div>
+            </div>
+            <button class="save-btn" id="addCommandBtn" onclick="toggleAddForm()" style="background:#6c5ce7; margin-bottom:16px;">➕ <span id="addCommandText">Добавить новую команду</span></button>
+
+            <div class="add-command-form" id="addCommandForm">
+                <h3 style="margin-bottom:16px;font-weight:700;" id="newCommandTitle">✨ Новая команда</h3>
+                <div class="form-row">
+                    <label id="cmdNameLabel">🏷️ Название команды</label>
+                    <input type="text" id="newCommandName" placeholder="!mycommand">
+                </div>
+                <div class="form-row">
+                    <label id="cmdPermLabel">🔒 Права доступа</label>
+                    <div class="command-permissions" id="newPermCheckboxes">
+                        <label class="perm-checkbox">
+                            <input type="checkbox" value="everyone" checked>
+                            <span id="permEveryone">👥 Все</span>
+                        </label>
+                        <label class="perm-checkbox">
+                            <input type="checkbox" value="subscriber">
+                            <span id="permSubscriber">⭐ Подписчики</span>
+                        </label>
+                        <label class="perm-checkbox">
+                            <input type="checkbox" value="moderator">
+                            <span id="permModerator">🛡️ Модераторы</span>
+                        </label>
+                        <label class="perm-checkbox">
+                            <input type="checkbox" value="broadcaster">
+                            <span id="permBroadcaster">👑 Стример</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <label id="cmdCooldownLabel">⏱️ Задержка (секунд)</label>
+                    <input type="number" id="newCommandCooldown" value="5" min="0" max="60">
+                </div>
+                <div class="form-row">
+                    <label id="cmdResponseLabel">📝 Описание</label>
+                    <input type="text" id="newCommandResponse" placeholder="Что делает эта команда...">
+                </div>
+                <div class="form-buttons">
+                    <button class="btn-primary" onclick="createCommand()" id="createBtn">✅ Создать</button>
+                    <button class="btn-secondary" onclick="hideAddForm()" id="cancelBtn">❌ Отмена</button>
+                </div>
+            </div>
+            <button class="save-btn" id="saveChatCommandsBtn" onclick="saveCommands()" style="margin-top:16px;">💾 <span id="saveCommandsText">Сохранить команды</span></button>
+        </div>
+
+        <!-- ВИДЖЕТЫ -->
+        <div class="settings-card">
+            <h2 id="widgetSettingsTitle">🖥️ Настройки виджета OBS</h2>
+            <div class="setting-row">
+                <label id="marqueeLabel">📜 Бегущая строка для длинных названий</label>
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <label class="switch"><input type="checkbox" id="marqueeEnabled" checked><span class="slider"></span></label>
+                    <span id="marqueeStatus" style="font-size:13px;font-weight:600;">Включено</span>
+                </div>
+                <small id="marqueeDesc">Если название трека не помещается, оно будет плавно прокручиваться</small>
+            </div>
+            <div class="setting-row" id="marqueeSpeedRow">
+                <label id="marqueeSpeedLabel">⚡ Скорость прокрутки (секунд)</label>
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <input type="range" id="marqueeSpeed" min="5" max="30" value="15" step="1" style="flex:1;">
+                    <span id="marqueeSpeedValue" style="min-width:45px;font-weight:700;">15 сек</span>
+                </div>
+                <small id="marqueeSpeedDesc">Меньше число = быстрее прокрутка</small>
+            </div>
+        </div>
+
+        <!-- СОХРАНИТЬ -->
+        <div class="settings-card">
+            <button class="save-btn" id="saveBtn" onclick="saveAll()">💾 <span id="saveAllText">Сохранить все настройки</span></button>
+        </div>
+
+        <div class="secret-container">
+            <div class="secret-page-btn" id="secretPageBtn">🔐 <span id="secretText">Секретная кнопка</span></div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p id="footerText">LakeBot — музыкальный бот для Twitch | Настройки</p>
+    </footer>
+
+    <script>
+        // ============================================================
+        // БУРГЕР-МЕНЮ (НОРМАЛЬНЫЙ, БЕЗ ЛАГОВ)
+        // ============================================================
+        (function() {
+            var burger = document.getElementById('burgerMenu');
+            var sidebar = document.getElementById('sidebar');
+            var overlay = document.getElementById('overlay');
+
+            if (!burger || !sidebar || !overlay) return;
+
+            var isOpen = false;
+
+            function openMenu() {
+                isOpen = true;
+                burger.classList.add('active');
+                sidebar.classList.add('open');
+                overlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeMenu() {
+                isOpen = false;
+                burger.classList.remove('active');
+                sidebar.classList.remove('open');
+                overlay.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+
+            function toggleMenu(e) {
+                if (e) e.stopPropagation();
+                if (isOpen) {
+                    closeMenu();
+                } else {
+                    openMenu();
+                }
+            }
+
+            // Клик по бургеру
+            burger.addEventListener('click', toggleMenu);
+
+            // Клик по оверлею
+            overlay.addEventListener('click', closeMenu);
+
+            // Клик по пунктам меню
+            document.querySelectorAll('.sidebar-item').forEach(function(item) {
+                item.addEventListener('click', closeMenu);
+            });
+
+            // Escape
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && isOpen) {
+                    closeMenu();
+                }
+            });
+
+            // Активный пункт
+            document.querySelectorAll('.sidebar-item').forEach(function(item) {
+                if (item.getAttribute('href') === window.location.pathname) {
+                    item.classList.add('active');
+                }
+            });
+        })();
+
+        // ============================================================
+        // ПЕРЕВОДЫ
+        // ============================================================
+        var translations = {
+            ru: {
+                heroTitle: 'Настройки LakeBot',
+                heroDesc: 'Настройте бота под свои потребности',
+                langTitle: '🌍 Язык',
+                themeTitle: '🎨 Оформление',
+                themePurpleTitle: '🟣 Фиолетовая',
+                themePurpleDesc: 'Deep purple стиль (по умолчанию)',
+                themeDarkTitle: '⚫ Тёмная',
+                themeDarkDesc: 'Чёрная тема',
+                themeLightTitle: '⚪ Светлая',
+                themeLightDesc: 'Белая тема',
+                musicSettingsTitle: '🎵 Настройки музыки',
+                maxDurationLabel: '📺 Максимальная длительность видео (секунд)',
+                maxTracksLabel: '🎵 Максимум треков на пользователя',
+                voteThresholdLabel: '🗳️ Порог голосования для пропуска',
+                durationHint: '8 минут = 480 секунд',
+                chatCommandsTitle: '💬 Команды Twitch чата',
+                widgetSettingsTitle: '🖥️ Настройки виджета OBS',
+                marqueeLabel: '📜 Бегущая строка для длинных названий',
+                marqueeDesc: 'Если название трека не помещается, оно будет плавно прокручиваться',
+                marqueeSpeedLabel: '⚡ Скорость прокрутки (секунд)',
+                marqueeSpeedDesc: 'Меньше число = быстрее прокрутка',
+                saveAllText: 'Сохранить все настройки',
+                footerText: 'LakeBot — музыкальный бот для Twitch | Настройки',
+                secretText: 'Секретная кнопка',
+                addCommandText: 'Добавить новую команду',
+                saveCommandsText: 'Сохранить команды',
+                newCommandTitle: '✨ Новая команда',
+                cmdNameLabel: '🏷️ Название команды',
+                cmdPermLabel: '🔒 Права доступа',
+                cmdCooldownLabel: '⏱️ Задержка (секунд)',
+                cmdResponseLabel: '📝 Описание',
+                createBtn: '✅ Создать',
+                cancelBtn: '❌ Отмена',
+                permEveryone: '👥 Все',
+                permSubscriber: '⭐ Подписчики',
+                permModerator: '🛡️ Модераторы',
+                permBroadcaster: '👑 Стример',
+                noDescription: 'Описание не задано',
+                delayLabel: 'Задержка:',
+                sec: 'сек',
+                deleteCommand: '🗑 Удалить',
+                loading: '⏳ Загрузка команд...',
+                emptyCommands: '📭 Команды не найдены',
+                commandDescText: 'Описание:',
+                unsavedText: '⚠️ У вас есть несохранённые изменения',
+                sidebarHome: 'Главная',
+                sidebarMusic: 'Музыка',
+                sidebarDashboard: 'Статистика',
+                sidebarModerators: 'Модераторы',
+                sidebarSettings: 'Настройки',
+                sidebarWidgets: 'Виджеты для OBS',
+                authBtn: '🔐 Войти через Twitch',
+                desc_sr: 'Заказать трек по ссылке YouTube',
+                desc_skip: 'Пропустить текущий трек',
+                desc_back: 'Вернуться к предыдущему треку',
+                desc_queue: 'Показать очередь заказов',
+                desc_voteskip: 'Голосовать за пропуск трека',
+                desc_clear: 'Очистить всю очередь',
+                desc_help: 'Показать список доступных команд'
+            },
+            en: {
+                heroTitle: 'LakeBot Settings',
+                heroDesc: 'Configure the bot to your needs',
+                langTitle: '🌍 Language',
+                themeTitle: '🎨 Appearance',
+                themePurpleTitle: '🟣 Purple',
+                themePurpleDesc: 'Deep purple style (default)',
+                themeDarkTitle: '⚫ Dark',
+                themeDarkDesc: 'Black theme',
+                themeLightTitle: '⚪ Light',
+                themeLightDesc: 'White theme',
+                musicSettingsTitle: '🎵 Music Settings',
+                maxDurationLabel: '📺 Max video duration (seconds)',
+                maxTracksLabel: '🎵 Max tracks per user',
+                voteThresholdLabel: '🗳️ Vote skip threshold',
+                durationHint: '8 minutes = 480 seconds',
+                chatCommandsTitle: '💬 Twitch Chat Commands',
+                widgetSettingsTitle: '🖥️ OBS Widget Settings',
+                marqueeLabel: '📜 Marquee for long titles',
+                marqueeDesc: 'If the track title doesn\'t fit, it will scroll smoothly',
+                marqueeSpeedLabel: '⚡ Scroll speed (seconds)',
+                marqueeSpeedDesc: 'Lower number = faster scroll',
+                saveAllText: 'Save all settings',
+                footerText: 'LakeBot — music bot for Twitch | Settings',
+                secretText: 'Secret button',
+                addCommandText: 'Add new command',
+                saveCommandsText: 'Save commands',
+                newCommandTitle: '✨ New command',
+                cmdNameLabel: '🏷️ Command name',
+                cmdPermLabel: '🔒 Permissions',
+                cmdCooldownLabel: '⏱️ Cooldown (seconds)',
+                cmdResponseLabel: '📝 Description',
+                createBtn: '✅ Create',
+                cancelBtn: '❌ Cancel',
+                permEveryone: '👥 Everyone',
+                permSubscriber: '⭐ Subscribers',
+                permModerator: '🛡️ Moderators',
+                permBroadcaster: '👑 Streamer',
+                noDescription: 'No description set',
+                delayLabel: 'Delay:',
+                sec: 'sec',
+                deleteCommand: '🗑 Delete',
+                loading: '⏳ Loading commands...',
+                emptyCommands: '📭 No commands found',
+                commandDescText: 'Description:',
+                unsavedText: '⚠️ You have unsaved changes',
+                sidebarHome: 'Home',
+                sidebarMusic: 'Music',
+                sidebarDashboard: 'Dashboard',
+                sidebarModerators: 'Moderators',
+                sidebarSettings: 'Settings',
+                sidebarWidgets: 'OBS Widgets',
+                authBtn: '🔐 Login with Twitch',
+                desc_sr: 'Request a track via YouTube link',
+                desc_skip: 'Skip the current track',
+                desc_back: 'Go back to previous track',
+                desc_queue: 'Show the order queue',
+                desc_voteskip: 'Vote to skip the track',
+                desc_clear: 'Clear the entire queue',
+                desc_help: 'Show available commands'
+            }
+        };
+
+        var currentLang = localStorage.getItem('lakebot_language') || 'ru';
+        var hasUnsavedChanges = false;
+        var savedSettings = {};
+
+        // ============================================================
+        // БАННЕР НЕСОХРАНЁННЫХ ИЗМЕНЕНИЙ
+        // ============================================================
+        function showUnsavedBanner() {
+            var banner = document.getElementById('unsavedBanner');
+            var t = translations[currentLang] || translations.ru;
+            document.getElementById('unsavedText').textContent = t.unsavedText;
+            banner.classList.add('show');
+            hasUnsavedChanges = true;
+        }
+
+        function hideUnsavedBanner() {
+            document.getElementById('unsavedBanner').classList.remove('show');
+            hasUnsavedChanges = false;
+        }
+
+        function checkChanges() {
+            if (!hasUnsavedChanges) {
+                showUnsavedBanner();
+            }
+        }
+
+        // ============================================================
+        // ОБНОВЛЕНИЕ ТЕКСТОВ
+        // ============================================================
+        function updateTexts() {
+            var t = translations[currentLang] || translations.ru;
+
+            var staticIds = ['heroTitle', 'heroDesc', 'langTitle', 'themeTitle', 'themePurpleTitle', 'themePurpleDesc',
+                'themeDarkTitle', 'themeDarkDesc', 'themeLightTitle', 'themeLightDesc', 'musicSettingsTitle',
+                'maxDurationLabel', 'maxTracksLabel', 'voteThresholdLabel', 'durationHint', 'chatCommandsTitle',
+                'widgetSettingsTitle', 'marqueeLabel', 'marqueeDesc', 'marqueeSpeedLabel', 'marqueeSpeedDesc',
+                'saveAllText', 'footerText', 'secretText', 'addCommandText', 'saveCommandsText', 'newCommandTitle',
+                'cmdNameLabel', 'cmdPermLabel', 'cmdCooldownLabel', 'cmdResponseLabel', 'createBtn', 'cancelBtn',
+                'permEveryone', 'permSubscriber', 'permModerator', 'permBroadcaster'
+            ];
+            for (var i = 0; i < staticIds.length; i++) {
+                var el = document.getElementById(staticIds[i]);
+                if (el) {
+                    if (staticIds[i] === 'maxDurationLabel' || staticIds[i] === 'maxTracksLabel' || staticIds[i] ===
+                        'voteThresholdLabel' || staticIds[i] === 'marqueeLabel') {
+                        el.innerHTML = t[staticIds[i]];
+                    } else {
+                        el.textContent = t[staticIds[i]];
+                    }
+                }
+            }
+
+            var sidebarIds = ['sidebarHome', 'sidebarMusic', 'sidebarDashboard', 'sidebarModerators', 'sidebarSettings',
+                'sidebarWidgets'
+            ];
+            var sidebarKeys = ['sidebarHome', 'sidebarMusic', 'sidebarDashboard', 'sidebarModerators', 'sidebarSettings',
+                'sidebarWidgets'
+            ];
+            for (var j = 0; j < sidebarIds.length; j++) {
+                var el = document.getElementById(sidebarIds[j]);
+                if (el) {
+                    el.textContent = t[sidebarKeys[j]];
+                }
+            }
+
+            var authSection = document.getElementById('authSection');
+            if (authSection && !currentUser) {
+                authSection.innerHTML = '<a href="/auth/twitch" class="auth-btn">' + t.authBtn + '</a>';
+            }
+
+            document.querySelectorAll('.command-delete').forEach(function(btn) {
+                btn.textContent = t.deleteCommand;
+            });
+
+            document.querySelectorAll('.desc-text').forEach(function(el) {
+                var cmdName = el.getAttribute('data-command');
+                var descKey = 'desc_' + cmdName;
+                if (t[descKey]) {
+                    el.textContent = t[descKey];
+                } else {
+                    var cmdData = window.commandsData ? window.commandsData['!' + cmdName] : null;
+                    if (cmdData && cmdData.response) {
+                        el.textContent = cmdData.response;
+                    } else {
+                        el.textContent = t.noDescription;
+                    }
+                }
+            });
+
+            document.querySelectorAll('.command-desc .desc-label').forEach(function(el) {
+                el.textContent = t.commandDescText || 'Описание:';
+            });
+        }
+
+        // ============================================================
+        // ЯЗЫК
+        // ============================================================
+        function setLang(lang) {
+            currentLang = lang;
+            localStorage.setItem('lakebot_language', lang);
+            document.querySelectorAll('.lang-option').forEach(function(el) {
+                el.classList.toggle('active', el.getAttribute('data-lang') === lang);
+            });
+            window.currentLang = lang;
+            updateTexts();
+            loadCommands();
+            fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key: 'language', value: lang })
+            }).catch(function() {});
+        }
+
+        // ============================================================
+        // ТЕМА
+        // ============================================================
+        function setTheme(theme) {
+            document.querySelectorAll('.theme-option').forEach(function(el) {
+                el.classList.toggle('selected', el.getAttribute('data-theme') === theme);
+            });
+            document.body.className = '';
+            document.body.classList.add(theme);
+            localStorage.setItem('lakebot_theme', theme);
+            fetch('/api/theme', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ theme: theme })
+            }).catch(function() {});
+        }
+
+        // ============================================================
+        // ЗАГРУЗКА НАСТРОЕК
+        // ============================================================
+        async function loadSavedSettings() {
+            try {
+                var res = await fetch('/api/settings');
+                var settings = await res.json();
+                savedSettings = settings;
+
+                if (settings.max_duration) document.getElementById('maxDuration').value = settings.max_duration;
+                if (settings.max_tracks_per_user) document.getElementById('maxTracks').value = settings
+                .max_tracks_per_user;
+                if (settings.vote_threshold) document.getElementById('voteThreshold').value = settings.vote_threshold;
+                if (settings.marquee_enabled !== undefined) {
+                    document.getElementById('marqueeEnabled').checked = settings.marquee_enabled === 'true';
+                    document.getElementById('marqueeStatus').textContent = settings.marquee_enabled === 'true' ?
+                        'Включено' : 'Выключено';
+                }
+                if (settings.marquee_speed) {
+                    document.getElementById('marqueeSpeed').value = settings.marquee_speed;
+                    document.getElementById('marqueeSpeedValue').textContent = settings.marquee_speed + ' сек';
+                }
+                if (settings.site_theme) {
+                    document.body.className = '';
+                    document.body.classList.add(settings.site_theme);
+                    document.querySelectorAll('.theme-option').forEach(function(el) {
+                        el.classList.toggle('selected', el.getAttribute('data-theme') === settings.site_theme);
+                    });
+                    localStorage.setItem('lakebot_theme', settings.site_theme);
+                }
+                if (settings.language) {
+                    currentLang = settings.language;
+                    document.querySelectorAll('.lang-option').forEach(function(el) {
+                        el.classList.toggle('active', el.getAttribute('data-lang') === settings.language);
+                    });
+                    updateTexts();
+                }
+            } catch (e) {}
+        }
+
+        // ============================================================
+        // КОМАНДЫ
+        // ============================================================
+        function loadCommands() {
+            var container = document.getElementById('chatCommandsList');
+            var t = translations[currentLang] || translations.ru;
+            container.innerHTML = '<div style="text-align:center;padding:20px;color:#9146ff;">' + t.loading + '</div>';
+
+            fetch('/api/chat-commands')
+                .then(function(res) { return res.json(); })
+                .then(function(commands) {
+                    window.commandsData = commands;
+                    if (!commands || Object.keys(commands).length === 0) {
+                        container.innerHTML = '<div style="text-align:center;padding:20px;">' + t.emptyCommands +
+                        '</div>';
+                        return;
+                    }
+                    var html = '';
+                    for (var name in commands) {
+                        if (name === '!play') continue;
+
+                        var cmd = commands[name];
+                        var perm = cmd.permission || 'everyone';
+                        var cleanName = name.replace('!', '');
+                        var descKey = 'desc_' + cleanName;
+                        var desc = t[descKey] || cmd.response || t.noDescription;
+
+                        html += '<div class="command-item" data-command="' + name + '">';
+                        html += '  <div class="command-header">';
+                        html += '    <span class="command-name">' + name + '</span>';
+                        html += '    <button class="command-delete" onclick="deleteCommand(\'' + name +
+                        '\')">' + t.deleteCommand + '</button>';
+                        html += '  </div>';
+                        html += '  <div class="command-permissions">';
+                        html += '    <label class="perm-checkbox"><input type="checkbox" value="everyone" ' + (perm ===
+                            'everyone' ? 'checked' : '') + ' onclick="updatePerm(\'' + name + '\', this)"><span>' +
+                            t.permEveryone + '</span></label>';
+                        html += '    <label class="perm-checkbox"><input type="checkbox" value="subscriber" ' + (perm ===
+                            'subscriber' ? 'checked' : '') + ' onclick="updatePerm(\'' + name + '\', this)"><span>' +
+                            t.permSubscriber + '</span></label>';
+                        html += '    <label class="perm-checkbox"><input type="checkbox" value="moderator" ' + (perm ===
+                            'moderator' ? 'checked' : '') + ' onclick="updatePerm(\'' + name + '\', this)"><span>' +
+                            t.permModerator + '</span></label>';
+                        html += '    <label class="perm-checkbox"><input type="checkbox" value="broadcaster" ' + (perm ===
+                            'broadcaster' ? 'checked' : '') + ' onclick="updatePerm(\'' + name + '\', this)"><span>' +
+                            t.permBroadcaster + '</span></label>';
+                        html += '  </div>';
+                        html += '  <div class="command-cooldown">';
+                        html += '    <label>' + t.delayLabel + '</label>';
+                        html += '    <input type="number" value="' + (cmd.cooldown || 5) +
+                            '" min="0" max="60" onchange="updateCooldown(\'' + name + '\', this.value)">';
+                        html += '    <span>' + t.sec + '</span>';
+                        html += '  </div>';
+                        html += '  <div class="command-desc">';
+                        html += '    <i>📝</i>';
+                        html += '    <span class="desc-label" style="opacity:0.6;margin-right:4px;">' + (t
+                            .commandDescText || 'Описание:') + '</span>';
+                        html += '    <span class="desc-text" data-command="' + cleanName + '">' + desc + '</span>';
+                        html += '  </div>';
+                        html += '</div>';
+                    }
+                    container.innerHTML = html;
+                })
+                .catch(function() {
+                    container.innerHTML =
+                        '<div style="text-align:center;padding:20px;color:#ff5555;">❌ Ошибка загрузки команд</div>';
+                });
+        }
+
+        function updatePerm(name, checkbox) {
+            var parent = checkbox.closest('.command-permissions');
+            var checkboxes = parent.querySelectorAll('input[type="checkbox"]');
+            var checked = [];
+            checkboxes.forEach(function(cb) {
+                if (cb.checked) checked.push(cb.value);
+            });
+            var perm = 'everyone';
+            if (checked.includes('broadcaster')) perm = 'broadcaster';
+            else if (checked.includes('moderator')) perm = 'moderator';
+            else if (checked.includes('subscriber')) perm = 'subscriber';
+
+            fetch('/api/chat-commands', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ command_name: name, permission: perm })
+            }).catch(function() {});
+            checkChanges();
+        }
+
+        function updateCooldown(name, value) {
+            fetch('/api/chat-commands', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ command_name: name, cooldown: parseInt(value) || 5 })
+            }).catch(function() {});
+            checkChanges();
+        }
+
+        function deleteCommand(name) {
+            var t = translations[currentLang] || translations.ru;
+            if (!confirm('Удалить команду ' + name + '?')) return;
+            fetch('/api/chat-commands/' + encodeURIComponent(name), { method: 'DELETE' })
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    if (data.success) {
+                        showNotif('✅ Команда удалена', 'success');
+                        loadCommands();
+                    } else {
+                        showNotif('❌ Ошибка удаления', 'error');
+                    }
+                })
+                .catch(function() {
+                    showNotif('❌ Ошибка', 'error');
+                });
+        }
+
+        // ============================================================
+        // ДОБАВЛЕНИЕ
+        // ============================================================
+        function toggleAddForm() {
+            var form = document.getElementById('addCommandForm');
+            form.classList.toggle('visible');
+        }
+
+        function hideAddForm() {
+            document.getElementById('addCommandForm').classList.remove('visible');
+            document.getElementById('newCommandName').value = '';
+            document.getElementById('newCommandResponse').value = '';
+            document.getElementById('newCommandCooldown').value = '5';
+            document.querySelectorAll('#newPermCheckboxes input').forEach(function(el) {
+                el.checked = false;
+            });
+            document.querySelector('#newPermCheckboxes input[value="everyone"]').checked = true;
+        }
+
+        function getSelectedPermNew() {
+            var checked = document.querySelectorAll('#newPermCheckboxes input:checked');
+            var values = [];
+            checked.forEach(function(el) { values.push(el.value); });
+            if (values.includes('broadcaster')) return 'broadcaster';
+            if (values.includes('moderator')) return 'moderator';
+            if (values.includes('subscriber')) return 'subscriber';
+            return 'everyone';
+        }
+
+        function createCommand() {
+            var name = document.getElementById('newCommandName').value.trim();
+            var response = document.getElementById('newCommandResponse').value.trim();
+            var cooldown = parseInt(document.getElementById('newCommandCooldown').value) || 5;
+            var perm = getSelectedPermNew();
+
+            if (!name) {
+                showNotif('❌ Введите название команды', 'error');
+                return;
+            }
+            if (!name.startsWith('!')) {
+                showNotif('❌ Команда должна начинаться с !', 'error');
+                return;
+            }
+
+            fetch('/api/chat-commands', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    command_name: name,
+                    permission: perm,
+                    cooldown: cooldown,
+                    response: response || 'Описание не задано'
+                })
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    showNotif('✅ Команда создана!', 'success');
+                    hideAddForm();
+                    loadCommands();
+                } else {
+                    showNotif('❌ Ошибка создания', 'error');
+                }
+            })
+            .catch(function() {
+                showNotif('❌ Ошибка', 'error');
+            });
+        }
+
+        // ============================================================
+        // СОХРАНЕНИЕ
+        // ============================================================
+        function saveCommands() {
+            showNotif('✅ Команды сохранены', 'success');
+            hideUnsavedBanner();
+        }
+
+        function saveAll() {
+            var theme = 'purple';
+            document.querySelectorAll('.theme-option').forEach(function(el) {
+                if (el.classList.contains('selected')) {
+                    theme = el.getAttribute('data-theme');
+                }
+            });
+
+            var settings = [
+                { key: 'max_duration', value: document.getElementById('maxDuration').value },
+                { key: 'max_tracks_per_user', value: document.getElementById('maxTracks').value },
+                { key: 'vote_threshold', value: document.getElementById('voteThreshold').value },
+                { key: 'site_theme', value: theme },
+                { key: 'language', value: currentLang },
+                { key: 'marquee_enabled', value: document.getElementById('marqueeEnabled').checked ? 'true' : 'false' },
+                { key: 'marquee_speed', value: document.getElementById('marqueeSpeed').value }
+            ];
+
+            var promises = settings.map(function(s) {
+                return fetch('/api/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(s)
+                });
+            });
+
+            Promise.all(promises)
+                .then(function() {
+                    showNotif('✅ Настройки сохранены!', 'success');
+                    hideUnsavedBanner();
+                    loadSavedSettings();
+                })
+                .catch(function() {
+                    showNotif('❌ Ошибка сохранения', 'error');
+                });
+        }
+
+        // ============================================================
+        // УВЕДОМЛЕНИЯ
+        // ============================================================
+        function showNotif(message, type) {
+            var notif = document.createElement('div');
+            notif.textContent = message;
+            notif.className = 'notification';
+            notif.style.background = type === 'success' ? '#44ff88' : type === 'error' ? '#ff5555' : '#9146ff';
+            notif.style.color = type === 'success' ? '#0a0a1a' : 'white';
+            document.body.appendChild(notif);
+            setTimeout(function() { notif.remove(); }, 3000);
+        }
+
+        // ============================================================
+        // ОТСЛЕЖИВАНИЕ ИЗМЕНЕНИЙ
+        // ============================================================
+        function setupChangeTracking() {
+            var inputs = ['maxDuration', 'maxTracks', 'voteThreshold', 'marqueeSpeed'];
+            inputs.forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('change', checkChanges);
+                    el.addEventListener('input', checkChanges);
+                }
+            });
+
+            document.getElementById('marqueeEnabled').addEventListener('change', checkChanges);
+        }
+
+        // ============================================================
+        // MARQUEE
+        // ============================================================
+        document.getElementById('marqueeEnabled').addEventListener('change', function() {
+            document.getElementById('marqueeStatus').textContent = this.checked ? 'Включено' : 'Выключено';
+        });
+
+        document.getElementById('marqueeSpeed').addEventListener('input', function(e) {
+            document.getElementById('marqueeSpeedValue').textContent = e.target.value + ' сек';
+        });
+
+        // ============================================================
+        // СЕКРЕТНАЯ КНОПКА
+        // ============================================================
+        (function() {
+            var secretBtn = document.getElementById('secretPageBtn');
+            if (!secretBtn) return;
+            var cooldown = false;
+            var timer = null;
+
+            function getSounds() {
+                var lang = currentLang || 'ru';
+                if (lang === 'ru') {
+                    return [
+                        document.getElementById('secretSound1'),
+                        document.getElementById('secretSound2')
+                    ];
+                } else {
+                    return [
+                        document.getElementById('secretSound3'),
+                        document.getElementById('secretSound4')
+                    ];
+                }
+            }
+
+            secretBtn.addEventListener('click', function() {
+                if (cooldown) {
+                    showNotif('⏳ Подождите 15 секунд', 'error');
+                    return;
+                }
+                var sounds = getSounds();
+                var sound = sounds[Math.floor(Math.random() * sounds.length)];
+                if (sound) {
+                    sound.currentTime = 0;
+                    sound.play().catch(function() {});
+                }
+                showNotif('🔊 Секретный звук!', 'info');
+                cooldown = true;
+                secretBtn.classList.add('disabled');
+                var sec = 15;
+                var update = function() {
+                    if (sec > 0) {
+                        secretBtn.innerHTML = '⏳ ' + sec + 's';
+                        sec--;
+                        timer = setTimeout(update, 1000);
+                    } else {
+                        var t = translations[currentLang] || translations.ru;
+                        secretBtn.innerHTML = '🔐 ' + t.secretText;
+                        secretBtn.classList.remove('disabled');
+                        cooldown = false;
+                        clearTimeout(timer);
+                    }
+                };
+                update();
+            });
+        })();
+
+        // ============================================================
+        // АВТОРИЗАЦИЯ
+        // ============================================================
+        var currentUser = null;
+
+        function checkAuth() {
+            fetch('/api/auth/me')
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    if (data.authenticated && data.user) {
+                        currentUser = data.user;
+                        var authSection = document.getElementById('authSection');
+                        if (authSection) {
+                            var t = translations[currentLang] || translations.ru;
+                            authSection.innerHTML =
+                                '<div class="user-info"><span>' + data.user.username +
+                                '</span><div class="user-avatar">' + data.user.username.charAt(0).toUpperCase() +
+                                '</div></div>';
+                        }
+                    }
+                })
+                .catch(function() {});
+        }
+
+        // ============================================================
+        // ИНИЦИАЛИЗАЦИЯ
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSavedSettings();
+
+            var savedTheme = localStorage.getItem('lakebot_theme') || 'purple';
+            document.body.classList.add(savedTheme);
+            document.querySelectorAll('.theme-option').forEach(function(el) {
+                el.classList.toggle('selected', el.getAttribute('data-theme') === savedTheme);
+            });
+
+            document.querySelectorAll('.lang-option').forEach(function(el) {
+                el.classList.toggle('active', el.getAttribute('data-lang') === currentLang);
+            });
+
+            checkAuth();
+            updateTexts();
+            loadCommands();
+            setupChangeTracking();
+        });
+
+        // ============================================================
+        // ПРИ ПЕРЕХОДЕ НА ДРУГУЮ СТРАНИЦУ
+        // ============================================================
+        window.addEventListener('beforeunload', function(e) {
+            if (hasUnsavedChanges) {
+                if (savedSettings) {
+                    if (savedSettings.max_duration) document.getElementById('maxDuration').value = savedSettings
+                        .max_duration;
+                    if (savedSettings.max_tracks_per_user) document.getElementById('maxTracks').value = savedSettings
+                        .max_tracks_per_user;
+                    if (savedSettings.vote_threshold) document.getElementById('voteThreshold').value = savedSettings
+                        .vote_threshold;
+                    if (savedSettings.marquee_enabled !== undefined) {
+                        document.getElementById('marqueeEnabled').checked = savedSettings.marquee_enabled === 'true';
+                        document.getElementById('marqueeStatus').textContent = savedSettings.marquee_enabled ===
+                            'true' ? 'Включено' : 'Выключено';
+                    }
+                    if (savedSettings.marquee_speed) {
+                        document.getElementById('marqueeSpeed').value = savedSettings.marquee_speed;
+                        document.getElementById('marqueeSpeedValue').textContent = savedSettings.marquee_speed +
+                            ' сек';
+                    }
+                }
+                hideUnsavedBanner();
+            }
+        });
+
+        // Экспорт
+        window.setLang = setLang;
+        window.setTheme = setTheme;
+        window.loadCommands = loadCommands;
+        window.updatePerm = updatePerm;
+        window.updateCooldown = updateCooldown;
+        window.deleteCommand = deleteCommand;
+        window.toggleAddForm = toggleAddForm;
+        window.hideAddForm = hideAddForm;
+        window.createCommand = createCommand;
+        window.saveCommands = saveCommands;
+        window.saveAll = saveAll;
+        window.showNotif = showNotif;
+        window.translations = translations;
+        window.currentLang = currentLang;
+        window.commandsData = {};
+        window.hideUnsavedBanner = hideUnsavedBanner;
+    </script>
+</body>
+</html>

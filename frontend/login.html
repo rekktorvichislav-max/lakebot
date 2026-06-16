@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LakeBot - Вход</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a0a2e 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .login-container {
+            background: #151530;
+            border-radius: 24px;
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            border: 1px solid rgba(145, 70, 255, 0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo h1 {
+            font-size: 32px;
+            background: linear-gradient(135deg, #9146ff, #b87cff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .logo p {
+            color: #8888aa;
+            margin-top: 8px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #aaaaff;
+            font-size: 14px;
+        }
+        .input-group input {
+            width: 100%;
+            background: #0a0a1a;
+            border: 1px solid #2a2a4a;
+            border-radius: 12px;
+            padding: 14px 16px;
+            color: #fff;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        .input-group input:focus {
+            outline: none;
+            border-color: #9146ff;
+        }
+        .login-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #9146ff, #5a2a9e);
+            border: none;
+            border-radius: 12px;
+            padding: 14px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(145, 70, 255, 0.4);
+        }
+        .error-message {
+            background: rgba(255, 85, 85, 0.2);
+            border: 1px solid #ff5555;
+            border-radius: 8px;
+            padding: 10px;
+            color: #ff8888;
+            text-align: center;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .demo-hint {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(145, 70, 255, 0.2);
+            color: #8888aa;
+            font-size: 12px;
+        }
+        .demo-hint code {
+            background: #0a0a1a;
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: #ffd700;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <h1>🎵 LAKEBOT</h1>
+            <p>Музыкальный бот для Twitch</p>
+        </div>
+        
+        <div class="error-message" id="errorMessage">
+            Неверный логин или пароль
+        </div>
+        
+        <div class="input-group">
+            <label>👤 Логин</label>
+            <input type="text" id="username" placeholder="admin" value="admin">
+        </div>
+        
+        <div class="input-group">
+            <label>🔒 Пароль</label>
+            <input type="password" id="password" placeholder="••••••" value="admin123">
+        </div>
+        
+        <button class="login-btn" onclick="login()">ВОЙТИ</button>
+        
+        <div class="demo-hint">
+            🔑 Тестовый доступ: <code>admin / admin123</code>
+        </div>
+    </div>
+
+    <script>
+        function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('errorMessage');
+            
+            // Простая проверка (для демо)
+            if (username === 'admin' && password === 'admin123') {
+                localStorage.setItem('lakebot_user', username);
+                window.location.href = '/dashboard.html';
+            } else {
+                errorDiv.style.display = 'block';
+                setTimeout(() => {
+                    errorDiv.style.display = 'none';
+                }, 3000);
+            }
+        }
+        
+        // Если уже авторизован - перенаправляем
+        if (localStorage.getItem('lakebot_user')) {
+            window.location.href = '/dashboard.html';
+        }
+        
+        // Enter нажатие
+        document.getElementById('password').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') login();
+        });
+    </script>
+</body>
+</html>
